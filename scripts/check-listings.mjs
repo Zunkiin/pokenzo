@@ -75,7 +75,6 @@ async function main() {
       const text = stripHtml(html).toLowerCase()
       const newInStock = !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
       const metaPrice = extractMetaPrice(html)
-      const metaPrice = extractMetaPrice(html)
       const newPrice = metaPrice ?? extractPrice(text) ?? listing.current_price
       const productName = listing.products?.name ?? 'Ukjent produkt'
       const storeName = listing.stores?.name ?? 'Ukjent butikk'
