@@ -18,7 +18,7 @@ export default function herocarousel({ products }) {
   const product = products[index]
 
   return (
-    <Link href={'/produkt/' + product.id} className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl">
+    <Link href={'/produkt/' + product.id} className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto">
       {products.map((p, i) => (
         <img
           key={p.id}
