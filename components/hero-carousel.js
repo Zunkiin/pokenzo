@@ -16,6 +16,29 @@ export default function HeroCarousel({ products }) {
   const router = useRouter()
   const [shuffledProducts, setShuffledProducts] = useState(products)
   const [index, setIndex] = useState(0)
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
+
+  function handleTouchStart(e) {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  function handleTouchMove(e) {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  function handleTouchEnd() {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const minSwipeDistance = 50
+
+    if (distance > minSwipeDistance) {
+      setIndex((i) => (i + 1) % shuffledProducts.length)
+    } else if (distance < -minSwipeDistance) {
+      setIndex((i) => (i - 1 + shuffledProducts.length) % shuffledProducts.length)
+    }
+  }
 
   useEffect(() => {
     setShuffledProducts(shuffle(products))
@@ -35,9 +58,12 @@ export default function HeroCarousel({ products }) {
 
   return (
     <div
-      onClick={() => router.push('/produkt/' + product.slug)}
-      className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer"
-    >
+  onClick={() => router.push('/produkt/' + product.slug)}
+  onTouchStart={handleTouchStart}
+  onTouchMove={handleTouchMove}
+  onTouchEnd={handleTouchEnd}
+  className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer"
+>
       {shuffledProducts.map((p, i) => (
         <img
           key={p.id}
