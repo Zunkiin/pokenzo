@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { toNOK, formatPrice } from '@/lib/currency'
+import Link from 'next/link'
 
 function formatCheckedAt(dateString) {
   if (!dateString) return 'Not checked yet'
@@ -21,18 +22,18 @@ function getCountryBadgeClass(country) {
 }
 
 export default async function ProductPage({ params }) {
-  const { id } = await params
+  const { slug } = await params
 
   const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single()
+  .from('products')
+  .select('id, slug, name, product_type, language, image_url')
+  .eq('slug', slug)
+  .single()
 
-  const { data: listings } = await supabase
-    .from('listings')
-    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country)')
-    .eq('product_id', id)
+const { data: listings } = await supabase
+  .from('listings')
+  .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
+  .eq('product_id', product?.id)
 
   if (!product) {
     return (
@@ -55,7 +56,12 @@ export default async function ProductPage({ params }) {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pb-16 pt-16">
       <div className="max-w-md mx-auto">
-
+      <Link
+             href="/"
+              className="inline-flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D] transition-colors mb-4"
+  >   
+   ← Back to all products
+      </Link>
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8A8C9C] mb-2">
             {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : ''} · {product.product_type}
@@ -89,8 +95,10 @@ export default async function ProductPage({ params }) {
               : 'text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-[#2A2C3D] text-[#8A8C9C] pointer-events-none'
 
             const storeName = listing.stores ? listing.stores.name : 'Unknown store'
-            const storeCountry = listing.stores ? listing.stores.country : null
-            const countryBadgeClass = getCountryBadgeClass(storeCountry)
+            const shipsTo = listing.stores?.ships_to && listing.stores.ships_to.length > 0
+                          ? listing.stores.ships_to
+                         : (listing.stores ? [listing.stores.country] : [])
+            
             const buttonText = listing.in_stock ? 'Buy at ' + storeName : 'Out of stock'
 
             return (
@@ -104,7 +112,9 @@ export default async function ProductPage({ params }) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">
-                      <span className={countryBadgeClass}>{storeCountry}</span>
+                      {shipsTo.map((c) => (
+                    <span key={c} className={getCountryBadgeClass(c)}>{c}</span>
+                    ))}
                       {storeName}
                     </p>
                     <p className={stockTextClass}>

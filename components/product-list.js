@@ -27,7 +27,7 @@ export default function ProductList({ products }) {
         {filtered.map((product) => (
           <Link
             key={product.id}
-            href={'/produkt/' + product.id}
+            href={'/produkt/' + product.slug}
             className="flex items-center gap-3 rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3"
           >
             {product.image_url && (
