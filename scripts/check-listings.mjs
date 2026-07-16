@@ -110,8 +110,8 @@ async function sendDiscordAlert(message) {
 
 async function main() {
   const { data: listings, error } = await supabase
-    .from('listings')
-    .select('id, product_url, currency, current_price, in_stock, products(name), stores(name)')
+  .from('listings')
+  .select('id, product_url, currency, current_price, in_stock, products(name, slug), stores(name)')
 
   if (error) {
     console.error('Klarte ikke hente listings:', error.message)
@@ -164,14 +164,16 @@ async function main() {
         in_stock: newInStock
       })
 
+      const pokenzoUrl = `https://www.pokenzo.com/produkt/${listing.products?.slug}`
+
       if (!listing.in_stock && newInStock) {
-        await sendDiscordAlert(`🟢 **${productName}** (${storeName}) er tilbake på lager! ${newPrice} ${listing.currency}\n${listing.product_url}`)
+        await sendDiscordAlert(`🟢 **${productName}** (${storeName}) er tilbake på lager! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
       }
       if (listing.in_stock && !newInStock) {
-        await sendDiscordAlert(`🔴 **${productName}** (${storeName}) er nå utsolgt.`)
+        await sendDiscordAlert(`🔴 **${productName}** (${storeName}) er nå utsolgt.\n${pokenzoUrl}`)
       }
       if (listing.current_price && newPrice < listing.current_price) {
-        await sendDiscordAlert(`💰 Prisfall på **${productName}** (${storeName}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${listing.product_url}`)
+        await sendDiscordAlert(`💰 Prisfall på **${productName}** (${storeName}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
       }
 
       await supabase
