@@ -11,6 +11,19 @@ const OUT_OF_STOCK_PHRASES = [
   'udsolgt', 'sold out', 'out of stock'
 ]
 
+function parsePriceString(raw) {
+  let cleaned = raw.replace(/[^\d.,]/g, '')
+  const lastDot = cleaned.lastIndexOf('.')
+  const lastComma = cleaned.lastIndexOf(',')
+  if (lastComma > lastDot) {
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.')
+  } else if (lastDot > lastComma) {
+    cleaned = cleaned.replace(/,/g, '')
+  }
+  const value = parseFloat(cleaned)
+  return isNaN(value) ? null : value
+}
+
 function stripHtml(html) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
@@ -29,10 +42,9 @@ function extractPrice(text) {
 function extractMetaPrice(html) {
   const metaMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:price:amount|product:price:amount)["'][^>]*>/i)
   if (!metaMatch) return null
-  const contentMatch = metaMatch[0].match(/content=["']([\d.]+)["']/i)
+  const contentMatch = metaMatch[0].match(/content=["']([\d.,]+)["']/i)
   if (!contentMatch) return null
-  const value = parseFloat(contentMatch[1])
-  return isNaN(value) ? null : value
+  return parsePriceString(contentMatch[1])
 }
 
 function extractWooCommercePrice(html) {
