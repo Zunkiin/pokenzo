@@ -27,7 +27,7 @@ export default async function ProductPage({ params }) {
 
   const { data: product } = await supabase
   .from('products')
-  .select('id, slug, name, product_type, language, image_url')
+  .select('id, slug, name, product_type, language, image_url, description')
   .eq('slug', slug)
   .single()
 
@@ -70,6 +70,11 @@ const { data: listings } = await supabase
           <h1 className="text-2xl font-semibold leading-tight mb-4">
             {product.name}
           </h1>
+            {product.description && (
+          <p className="text-sm text-[#8A8C9C] mb-4">
+            {product.description}
+          </p>
+          )}
           {listings && listings.length > 0 && (
             <p className="text-sm text-[#8A8C9C]">
               From <span className="text-[#E8A33D] font-mono text-base font-semibold">{formatPrice(listings[0].current_price, listings[0].currency)}</span> at {listings.length} {listings.length === 1 ? 'store' : 'stores'}
