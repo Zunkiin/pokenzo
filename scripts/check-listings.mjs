@@ -164,7 +164,7 @@ async function main() {
         in_stock: newInStock
       })
 
-      const pokenzoUrl = `https://www.pokenzo.com/produkt/${listing.products?.slug}`
+      const pokenzoUrl = `https://www.pokenzo.com/product/${listing.products?.slug}`
 
       if (!listing.in_stock && newInStock) {
         await sendDiscordAlert(`🟢 **${productName}** (${storeName}) er tilbake på lager! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)

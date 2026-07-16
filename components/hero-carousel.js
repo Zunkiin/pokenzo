@@ -71,7 +71,7 @@ export default function HeroCarousel({ products }) {
 
   function handleClick() {
     if (hasMovedRef.current) return
-    router.push('/produkt/' + shuffledProducts[index].slug)
+    router.push('/product/' + shuffledProducts[index].slug)
   }
 
   const trackStyle = {
