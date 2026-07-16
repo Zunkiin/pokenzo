@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Pokenzo",
-  description: "Prissammenligning for Pokémon TCG i Norge, Sverige og Danmark",
+  description: "Price comparison for Pokémon TCG in Scandinavia, Pokemon Go and TCG Hub",
 };
 
 export default function RootLayout({ children }) {

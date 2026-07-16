@@ -114,7 +114,7 @@ async function main() {
   .select('id, product_url, currency, current_price, in_stock, products(name, slug), stores(name)')
 
   if (error) {
-    console.error('Klarte ikke hente listings:', error.message)
+    console.error('Failed to fetch listings:', error.message)
     process.exit(1)
   }
 
@@ -147,7 +147,7 @@ async function main() {
         if (fallbackPrice !== null && listing.current_price) {
           const percentChange = Math.abs(fallbackPrice - listing.current_price) / listing.current_price
           if (percentChange > 0.7) {
-            console.warn(`Mistenkelig prisendring for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Beholder gammel pris.`)
+            console.warn(`Suspicious price change for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Keeping old price.`)
           } else {
             newPrice = fallbackPrice
           }
@@ -156,7 +156,7 @@ async function main() {
         }
       }
 
-      console.log(`[${storeName}] ${productName}: ${newInStock ? 'PÅ LAGER' : 'utsolgt'} - ${newPrice} ${listing.currency}`)
+      console.log(`[${storeName}] ${productName}: ${newInStock ? 'IN STOCK' : 'out of stock'} - ${newPrice} ${listing.currency}`)
 
       await supabase.from('price_history').insert({
         listing_id: listing.id,
@@ -167,13 +167,13 @@ async function main() {
       const pokenzoUrl = `https://www.pokenzo.com/product/${listing.products?.slug}`
 
       if (!listing.in_stock && newInStock) {
-        await sendDiscordAlert(`🟢 **${productName}** (${storeName}) er tilbake på lager! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
+        await sendDiscordAlert(`🟢 **${productName}** (${storeName}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
       }
       if (listing.in_stock && !newInStock) {
-        await sendDiscordAlert(`🔴 **${productName}** (${storeName}) er nå utsolgt.\n${pokenzoUrl}`)
+        await sendDiscordAlert(`🔴 **${productName}** (${storeName}) is now out of stock.\n${pokenzoUrl}`)
       }
       if (listing.current_price && newPrice < listing.current_price) {
-        await sendDiscordAlert(`💰 Prisfall på **${productName}** (${storeName}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
+        await sendDiscordAlert(`💰 Price drop on **${productName}** (${storeName}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
       }
 
       await supabase
@@ -186,7 +186,7 @@ async function main() {
         .eq('id', listing.id)
 
     } catch (err) {
-      console.error(`Feil ved sjekk av listing ${listing.id}:`, err.message)
+      console.error(`Error checking listing ${listing.id}:`, err.message)
     }
   }
 }

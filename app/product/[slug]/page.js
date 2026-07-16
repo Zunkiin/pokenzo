@@ -33,6 +33,32 @@ function getCountryBadgeClass(country) {
   return 'inline-block text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-[#2A2C3D] text-[#8A8C9C] mr-2 align-middle'
 }
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('name, image_url, description')
+    .eq('slug', slug)
+    .single()
+
+  if (!product) {
+    return { title: 'Product not found | Pokenzo' }
+  }
+
+  const description = product.description || `Compare prices for ${product.name} across Norway, Sweden and Denmark.`
+
+  return {
+    title: `${product.name} | Pokenzo`,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      images: product.image_url ? [{ url: product.image_url }] : [],
+    },
+  }
+}
+
 export default async function ProductPage({ params }) {
   const { slug } = await params
 
@@ -88,6 +114,13 @@ const { data: listings } = await supabase
           <h1 className="text-2xl font-semibold leading-tight mb-4">
             {product.name}
           </h1>
+          {product.image_url && (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full rounded-xl mb-4"
+            />
+          )}
             {product.description && (
           <p className="text-sm text-[#8A8C9C] mb-4">
             {product.description}
