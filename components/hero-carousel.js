@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -16,80 +16,108 @@ export default function HeroCarousel({ products }) {
   const router = useRouter()
   const [shuffledProducts, setShuffledProducts] = useState(products)
   const [index, setIndex] = useState(0)
-  const [touchStart, setTouchStart] = useState(null)
-  const [touchEnd, setTouchEnd] = useState(null)
-
-  function handleTouchStart(e) {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
-
-  function handleTouchMove(e) {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-
-  function handleTouchEnd() {
-    if (!touchStart || !touchEnd) return
-    const distance = touchStart - touchEnd
-    const minSwipeDistance = 50
-
-    if (distance > minSwipeDistance) {
-      setIndex((i) => (i + 1) % shuffledProducts.length)
-    } else if (distance < -minSwipeDistance) {
-      setIndex((i) => (i - 1 + shuffledProducts.length) % shuffledProducts.length)
-    }
-  }
+  const [dragOffset, setDragOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const touchStartX = useRef(null)
+  const containerRef = useRef(null)
+  const hasMovedRef = useRef(false)
 
   useEffect(() => {
     setShuffledProducts(shuffle(products))
+    setIndex(0)
   }, [products])
 
   useEffect(() => {
+    if (isDragging) return
     if (shuffledProducts.length <= 1) return
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % shuffledProducts.length)
     }, 4000)
     return () => clearInterval(timer)
-  }, [shuffledProducts.length])
+  }, [shuffledProducts.length, isDragging])
 
   if (!shuffledProducts || shuffledProducts.length === 0) return null
 
-  const product = shuffledProducts[index]
+  const count = shuffledProducts.length
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.targetTouches[0].clientX
+    hasMovedRef.current = false
+    setIsDragging(true)
+  }
+
+  function handleTouchMove(e) {
+    if (touchStartX.current === null) return
+    const currentX = e.targetTouches[0].clientX
+    const delta = currentX - touchStartX.current
+    if (Math.abs(delta) > 5) hasMovedRef.current = true
+    setDragOffset(delta)
+  }
+
+  function handleTouchEnd() {
+    const width = containerRef.current ? containerRef.current.offsetWidth : 300
+    const threshold = width * 0.2
+
+    if (dragOffset < -threshold) {
+      setIndex((i) => (i + 1) % count)
+    } else if (dragOffset > threshold) {
+      setIndex((i) => (i - 1 + count) % count)
+    }
+
+    setDragOffset(0)
+    touchStartX.current = null
+    setIsDragging(false)
+  }
+
+  function handleClick() {
+    if (hasMovedRef.current) return
+    router.push('/produkt/' + shuffledProducts[index].slug)
+  }
+
+  const trackStyle = {
+    display: 'flex',
+    width: count * 100 + '%',
+    transform: `translateX(calc(-${index * (100 / count)}% + ${dragOffset}px))`,
+    transition: isDragging ? 'none' : 'transform 400ms ease',
+  }
 
   return (
     <div
-  onClick={() => router.push('/produkt/' + product.slug)}
-  onTouchStart={handleTouchStart}
-  onTouchMove={handleTouchMove}
-  onTouchEnd={handleTouchEnd}
-  className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer"
->
-      {shuffledProducts.map((p, i) => (
-        <img
-          key={p.id}
-          src={p.image_url}
-          alt={p.name}
-          className={
-            'absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ' +
-            (i === index ? 'opacity-100' : 'opacity-0')
-          }
-        />
-      ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#14151F] via-[#14151F]/40 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-[#E8A33D] font-semibold mb-1">
-          Pokenzo
-        </p>
-        <h2 className="text-xl font-semibold text-[#EDEAE3] leading-snug">
-          {product.name}
-        </h2>
-        {product.cheapestPriceDisplay && (
-          <p className="text-sm text-[#C7C9D9] mt-1">
-            Fra <span className="font-mono text-[#E8A33D] font-semibold">{product.cheapestPriceDisplay}</span>
-          </p>
-        )}
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onClick={handleClick}
+      className="relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer select-none"
+    >
+      <div style={trackStyle}>
+        {shuffledProducts.map((p) => (
+          <div key={p.id} style={{ width: 100 / count + '%' }} className="relative h-64 sm:h-80 flex-shrink-0">
+            <img
+              src={p.image_url}
+              alt={p.name}
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#14151F] via-[#14151F]/40 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#E8A33D] font-semibold mb-1">
+                Pokenzo
+              </p>
+              <h2 className="text-xl font-semibold text-[#EDEAE3] leading-snug">
+                {p.name}
+              </h2>
+              {p.cheapestPriceDisplay && (
+                <p className="text-sm text-[#C7C9D9] mt-1">
+                  Fra <span className="font-mono text-[#E8A33D] font-semibold">{p.cheapestPriceDisplay}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
-      {shuffledProducts.length > 1 && (
+
+      {count > 1 && (
         <div className="absolute top-3 right-3 flex gap-1">
           {shuffledProducts.map((p, i) => (
             <span
@@ -99,7 +127,14 @@ export default function HeroCarousel({ products }) {
           ))}
         </div>
       )}
-      
+
+      <Link
+        href="/pokemon-go"
+        onClick={(e) => e.stopPropagation()}
+        className="absolute bottom-5 right-4 z-10 text-xs font-medium px-3 py-1.5 rounded-full bg-[#1E2030]/80 backdrop-blur border border-[#4A4D67] text-[#C7C9D9]"
+      >
+        Pokémon GO
+      </Link>
     </div>
   )
 }
