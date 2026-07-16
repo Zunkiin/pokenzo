@@ -17,8 +17,8 @@ export default function ProductList({ products }) {
   const [randomOrder, setRandomOrder] = useState(products)
 
   useEffect(() => {
-    setRandomOrder(shuffleArray(products))
-  }, [])
+  setRandomOrder(shuffleArray(products))
+}, [products])
 
   function handleSortChange(e) {
     const value = e.target.value
