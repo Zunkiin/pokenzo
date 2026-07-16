@@ -6,7 +6,6 @@ const categories = [
   { label: 'Booster Packs', href: '/?type=single_booster', type: 'single_booster' },
   { label: 'Elite Trainer Boxes', href: '/?type=etb', type: 'etb' },
   { label: 'Booster Bundles', href: '/?type=booster_bundle', type: 'booster_bundle' },
-  { label: 'Pokémon GO', href: '/pokemon-go', type: 'pokemon-go' },
 ]
 
 export default function CategoryNav({ activeType }) {

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 function shuffle(array) {
@@ -12,18 +13,19 @@ function shuffle(array) {
 }
 
 export default function HeroCarousel({ products }) {
+  const router = useRouter()
   const [shuffledProducts, setShuffledProducts] = useState(products)
   const [index, setIndex] = useState(0)
 
   useEffect(() => {
     setShuffledProducts(shuffle(products))
-  }, [])
+  }, [products])
 
   useEffect(() => {
     if (shuffledProducts.length <= 1) return
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % shuffledProducts.length)
-    }, 6000)
+    }, 4000)
     return () => clearInterval(timer)
   }, [shuffledProducts.length])
 
@@ -32,7 +34,10 @@ export default function HeroCarousel({ products }) {
   const product = shuffledProducts[index]
 
   return (
-    <Link href={'/produkt/' + product.slug} className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto">
+    <div
+      onClick={() => router.push('/produkt/' + product.slug)}
+      className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer"
+    >
       {shuffledProducts.map((p, i) => (
         <img
           key={p.id}
@@ -68,6 +73,13 @@ export default function HeroCarousel({ products }) {
           ))}
         </div>
       )}
-    </Link>
+      <Link
+  href="/pokemon-go"
+  onClick={(e) => e.stopPropagation()}
+  className="absolute bottom-5 right-4 z-10 text-xs font-medium px-3 py-1.5 rounded-full bg-[#1E2030]/80 backdrop-blur border border-[#4A4D67] text-[#C7C9D9]"
+>
+  Pokémon GO Hub
+</Link>
+    </div>
   )
 }
