@@ -32,7 +32,7 @@ export default function HeroCarousel({ products }) {
     if (shuffledProducts.length <= 1) return
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % shuffledProducts.length)
-    }, 4000)
+    }, 5500)
     return () => clearInterval(timer)
   }, [shuffledProducts.length, isDragging])
 
