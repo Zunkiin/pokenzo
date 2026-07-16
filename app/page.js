@@ -20,7 +20,9 @@ function mapProduct(product) {
     product_type: product.product_type,
     language: product.language,
     image_url: product.image_url,
+    clickCount: product.click_count || 0,
     storeCount: product.listings ? product.listings.length : 0,
+    cheapestPriceNOK: cheapest ? cheapest.nokPrice : null,
     cheapestPriceDisplay: cheapest ? formatPrice(cheapest.price, cheapest.currency) : null,
   }
 }
@@ -35,7 +37,7 @@ export default async function HomePage({ searchParams }) {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, slug, name, product_type, language, image_url, listings(current_price, currency, in_stock)')
+    .select('id, slug, name, product_type, language, image_url, click_count, listings(current_price, currency, in_stock)')
 
   const allProducts = (products || []).map(mapProduct)
   const filteredProducts = type ? allProducts.filter((p) => p.product_type === type) : allProducts

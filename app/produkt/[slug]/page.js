@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { toNOK, formatPrice } from '@/lib/currency'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 function formatCheckedAt(dateString) {
   if (!dateString) return 'Not checked yet'
@@ -27,9 +28,16 @@ export default async function ProductPage({ params }) {
 
   const { data: product } = await supabase
   .from('products')
-  .select('id, slug, name, product_type, language, image_url, description')
+  .select('id, slug, name, product_type, language, image_url, click_count, description')
   .eq('slug', slug)
   .single()
+  if (product) {
+  const supabaseAdmin = getSupabaseAdmin()
+  await supabaseAdmin
+    .from('products')
+    .update({ click_count: (product.click_count || 0) + 1 })
+    .eq('id', product.id)
+}
 
 const { data: listings } = await supabase
   .from('listings')
