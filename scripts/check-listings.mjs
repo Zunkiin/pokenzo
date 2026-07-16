@@ -76,17 +76,32 @@ async function main() {
 
       const html = await res.text()
       const text = stripHtml(html).toLowerCase()
+      const productName = listing.products?.name ?? 'Ukjent produkt'
+      const storeName = listing.stores?.name ?? 'Ukjent butikk'
+
       const metaAvailability = extractMetaAvailability(html)
       const newInStock = metaAvailability !== null
           ? metaAvailability
-          : !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
-      const metaPrice = extractMetaPrice(html)
-      const newPrice = metaPrice ?? extractPrice(text) ?? listing.current_price
-      const productName = listing.products?.name ?? 'Ukjent produkt'
-      const storeName = listing.stores?.name ?? 'Ukjent butikk'
-      
+        : !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
 
-      
+      const metaPrice = extractMetaPrice(html)
+      let newPrice = listing.current_price
+      if (metaPrice !== null) {
+    newPrice = metaPrice
+    } else {
+      const fallbackPrice = extractPrice(text)
+      if (fallbackPrice !== null && listing.current_price) {
+    const percentChange = Math.abs(fallbackPrice - listing.current_price) / listing.current_price
+    if (percentChange > 0.3) {
+      console.warn(`Mistenkelig prisendring for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Beholder gammel pris.`)
+    } else {
+      newPrice = fallbackPrice
+    }
+  } else if (fallbackPrice !== null) {
+    newPrice = fallbackPrice
+  }
+}
+    
 
       console.log(`[${storeName}] ${productName}: ${newInStock ? 'PÅ LAGER' : 'utsolgt'} - ${newPrice} ${listing.currency}`)
 
