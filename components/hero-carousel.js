@@ -2,24 +2,38 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-export default function herocarousel({ products }) {
+function shuffle(array) {
+  const copy = [...array]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
+export default function HeroCarousel({ products }) {
+  const [shuffledProducts, setShuffledProducts] = useState(products)
   const [index, setIndex] = useState(0)
 
   useEffect(() => {
-    if (products.length <= 1) return
+    setShuffledProducts(shuffle(products))
+  }, [])
+
+  useEffect(() => {
+    if (shuffledProducts.length <= 1) return
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % products.length)
-    }, 4000)
+      setIndex((i) => (i + 1) % shuffledProducts.length)
+    }, 6000)
     return () => clearInterval(timer)
-  }, [products.length])
+  }, [shuffledProducts.length])
 
-  if (!products || products.length === 0) return null
+  if (!shuffledProducts || shuffledProducts.length === 0) return null
 
-  const product = products[index]
+  const product = shuffledProducts[index]
 
   return (
     <Link href={'/produkt/' + product.slug} className="block relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto">
-      {products.map((p, i) => (
+      {shuffledProducts.map((p, i) => (
         <img
           key={p.id}
           src={p.image_url}
@@ -44,9 +58,9 @@ export default function herocarousel({ products }) {
           </p>
         )}
       </div>
-      {products.length > 1 && (
+      {shuffledProducts.length > 1 && (
         <div className="absolute top-3 right-3 flex gap-1">
-          {products.map((p, i) => (
+          {shuffledProducts.map((p, i) => (
             <span
               key={p.id}
               className={'h-1.5 rounded-full transition-all ' + (i === index ? 'w-4 bg-[#E8A33D]' : 'w-1.5 bg-white/30')}

@@ -25,6 +25,11 @@ function mapProduct(product) {
   }
 }
 
+export const metadata = {
+  title: 'Pokenzo - Pokémon TCG Price Comparison for Scandinavia',
+  description: 'Compare Pokémon TCG booster box, booster pack, booster bundle and Elite Trainer Box prices and stock across Norway, Sweden, and Denmark. Find the best deals from trusted stores.',
+}
+
 export default async function HomePage({ searchParams }) {
   const { type } = await searchParams
 
@@ -41,7 +46,10 @@ export default async function HomePage({ searchParams }) {
       <HeroCarousel products={carouselProducts} />
 
       <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 mt-6">
-        <CategoryNav />
+  <p className="text-sm text-[#8A8C9C] mb-4">
+ Compare Pokémon TCG prices and stock across Scandinavia
+</p>
+  <CategoryNav activeType={type || null} />
         <h1 className="text-lg font-semibold mt-4 mb-4">All products</h1>
         <ProductList products={filteredProducts} />
       </div>

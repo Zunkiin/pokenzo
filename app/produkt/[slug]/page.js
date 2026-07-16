@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { toNOK, formatPrice } from '@/lib/currency'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 function formatCheckedAt(dateString) {
   if (!dateString) return 'Not checked yet'
@@ -60,7 +61,7 @@ const { data: listings } = await supabase
              href="/"
               className="inline-flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D] transition-colors mb-4"
   >   
-   ← Back to all products
+   <ArrowLeft size={20} strokeWidth={2.5} /> Back
       </Link>
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8A8C9C] mb-2">
