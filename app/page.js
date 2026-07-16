@@ -33,14 +33,16 @@ export const metadata = {
 }
 
 export default async function HomePage({ searchParams }) {
-  const { type } = await searchParams
+  const { type, language } = await searchParams
 
   const { data: products } = await supabase
     .from('products')
     .select('id, slug, name, product_type, language, image_url, click_count, listings(current_price, currency, in_stock)')
 
   const allProducts = (products || []).map(mapProduct)
-  const filteredProducts = type ? allProducts.filter((p) => p.product_type === type) : allProducts
+  let filteredProducts = allProducts
+  if (type) filteredProducts = filteredProducts.filter((p) => p.product_type === type)
+  if (language) filteredProducts = filteredProducts.filter((p) => p.language === language)
   const carouselProducts = allProducts.filter((p) => p.image_url)
 
   return (
@@ -51,7 +53,7 @@ export default async function HomePage({ searchParams }) {
   <p className="text-sm text-[#8A8C9C] mb-4">
  Compare Pokémon Trading Card Game (TCG) prices and stock across Scandinavia.
 </p>
-  <CategoryNav activeType={type || null} />
+  <CategoryNav activeType={type || null} activeLanguage={language || null} />
         <h1 className="text-lg font-semibold mt-4 mb-4">All products</h1>
         <ProductList products={filteredProducts} />
       </div>

@@ -4,6 +4,16 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
+function formatProductType(type) {
+  const labels = {
+    booster_box: 'Booster Box',
+    single_booster: 'Booster Pack',
+    etb: 'Elite Trainer Box',
+    booster_bundle: 'Booster Bundle',
+  }
+  return labels[type] || type
+}
+
 function formatCheckedAt(dateString) {
   if (!dateString) return 'Not checked yet'
   const date = new Date(dateString)
@@ -73,7 +83,7 @@ const { data: listings } = await supabase
       </Link>
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8A8C9C] mb-2">
-            {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : ''} · {product.product_type}
+            {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : ''} · {formatProductType(product.product_type)}
           </p>
           <h1 className="text-2xl font-semibold leading-tight mb-4">
             {product.name}

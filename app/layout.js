@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from '@/components/navbar'
@@ -26,7 +27,8 @@ export default function RootLayout({ children }) {
       <body className="bg-[#14151F] text-[#EDEAE3] min-h-screen">
         <Navbar />
         {children}
-      </body>
+        <Analytics />
+    </body>
     </html>
   );
 }

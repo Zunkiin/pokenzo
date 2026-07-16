@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -8,7 +9,13 @@ const supabase = createClient(
 const OUT_OF_STOCK_PHRASES = [
   'utsolgt', 'ikke på lager', 'ikke tilgjengelig',
   'slut i lager', 'slutsåld', 'ej i lager',
-  'udsolgt', 'sold out', 'out of stock'
+  'udsolgt', 'sold out', 'out of stock',
+  'kommer snart', 'coming soon', 'lagerbeholdning: 0'
+]
+
+const END_MARKERS = [
+  'anbefalte produkter', 'du liker kanskje også', 'related products',
+  'andre kunder ser også på', 'anbefalte tilbehør', 'anbefalt tilbehør', 'siste sett'
 ]
 
 function parsePriceString(raw) {
@@ -34,6 +41,26 @@ function stripHtml(html) {
     .trim()
 }
 
+function getRelevantSection(fullText, productName) {
+  let text = fullText
+
+  if (productName) {
+  const words = productName.toLowerCase().split(' ').filter(w => w.length > 3)
+  const searchPhrase = words.slice(0, 2).join(' ')
+  const nameIdx = text.indexOf(searchPhrase)
+  if (nameIdx !== -1) {
+    text = text.slice(nameIdx)
+  }
+}
+
+  let cutIndex = text.length
+  for (const marker of END_MARKERS) {
+    const idx = text.indexOf(marker)
+    if (idx !== -1 && idx < cutIndex) cutIndex = idx
+  }
+  return text.slice(0, cutIndex)
+}
+
 function extractPrice(text) {
   const match = text.match(/(\d[\d\s]{1,6}(?:[.,]\d{2})?)\s?(?:kr|nok|sek|dkk)/i)
   return match ? parseFloat(match[1].replace(/\s/g, '').replace(',', '.')) : null
@@ -48,23 +75,28 @@ function extractMetaPrice(html) {
 }
 
 function extractWooCommercePrice(html) {
-  const match = html.match(/woocommerce-Price-amount amount["'][^>]*>\s*<bdi>\s*([\d.,\s]+)/i)
-  if (!match) return null
-  const value = parseFloat(match[1].replace(/\s/g, '').replace(',', '.'))
-  return isNaN(value) ? null : value
-}
-
-function extractMetaAvailability(html) {
-  const metaMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:availability|product:availability)["'][^>]*>/i)
-  if (!metaMatch) return null
-  const contentMatch = metaMatch[0].match(/content=["']([^"']+)["']/i)
-  if (!contentMatch) return null
-  const value = contentMatch[1].toLowerCase()
-  if (value.includes('instock') || value.includes('in stock')) return true
-  if (value.includes('outofstock') || value.includes('out of stock')) return false
+  const regex = /woocommerce-Price-amount amount["'][^>]*>\s*<bdi>\s*([\d.,\s]+)/gi
+  let match
+  while ((match = regex.exec(html)) !== null) {
+    const value = parsePriceString(match[1])
+    if (value !== null && value > 0) return value
+  }
   return null
 }
 
+function extractMetaAvailability(html) {
+  const metaTags = html.match(/<meta[^>]*>/gi) || []
+  for (const tag of metaTags) {
+    const isAvailabilityTag = /(?:property|name)=["'](?:og:availability|product:availability)["']/i.test(tag)
+    if (!isAvailabilityTag) continue
+    const contentMatch = tag.match(/content=["']([^"']+)["']/i)
+    if (!contentMatch) continue
+    const value = contentMatch[1].toLowerCase()
+    if (value.includes('instock') || value.includes('in stock')) return true
+    if (value.includes('outofstock') || value.includes('out of stock')) return false
+  }
+  return null
+}
 
 async function sendDiscordAlert(message) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL
@@ -94,33 +126,35 @@ async function main() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
       const html = await res.text()
-      const text = stripHtml(html).toLowerCase()
       const productName = listing.products?.name ?? 'Ukjent produkt'
       const storeName = listing.stores?.name ?? 'Ukjent butikk'
 
+      const fullText = stripHtml(html).toLowerCase()
+      const relevantText = getRelevantSection(fullText, productName)
+      const cleanedText = relevantText.replace(/salg\s+utsolgt/gi, '')
+
       const metaAvailability = extractMetaAvailability(html)
       const newInStock = metaAvailability !== null
-          ? metaAvailability
-        : !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
+        ? metaAvailability
+        : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
 
       const metaPrice = extractMetaPrice(html) ?? extractWooCommercePrice(html)
       let newPrice = listing.current_price
       if (metaPrice !== null) {
-    newPrice = metaPrice
-    } else {
-      const fallbackPrice = extractPrice(text)
-      if (fallbackPrice !== null && listing.current_price) {
-    const percentChange = Math.abs(fallbackPrice - listing.current_price) / listing.current_price
-    if (percentChange > 0.7) {
-      console.warn(`Mistenkelig prisendring for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Beholder gammel pris.`)
-    } else {
-      newPrice = fallbackPrice
-    }
-  } else if (fallbackPrice !== null) {
-    newPrice = fallbackPrice
-  }
-}
-    
+        newPrice = metaPrice
+      } else {
+        const fallbackPrice = extractPrice(relevantText)
+        if (fallbackPrice !== null && listing.current_price) {
+          const percentChange = Math.abs(fallbackPrice - listing.current_price) / listing.current_price
+          if (percentChange > 0.7) {
+            console.warn(`Mistenkelig prisendring for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Beholder gammel pris.`)
+          } else {
+            newPrice = fallbackPrice
+          }
+        } else if (fallbackPrice !== null) {
+          newPrice = fallbackPrice
+        }
+      }
 
       console.log(`[${storeName}] ${productName}: ${newInStock ? 'PÅ LAGER' : 'utsolgt'} - ${newPrice} ${listing.currency}`)
 
