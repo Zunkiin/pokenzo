@@ -35,6 +35,13 @@ function extractMetaPrice(html) {
   return isNaN(value) ? null : value
 }
 
+function extractWooCommercePrice(html) {
+  const match = html.match(/woocommerce-Price-amount amount["'][^>]*>\s*<bdi>\s*([\d.,\s]+)/i)
+  if (!match) return null
+  const value = parseFloat(match[1].replace(/\s/g, '').replace(',', '.'))
+  return isNaN(value) ? null : value
+}
+
 function extractMetaAvailability(html) {
   const metaMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:availability|product:availability)["'][^>]*>/i)
   if (!metaMatch) return null
@@ -84,7 +91,7 @@ async function main() {
           ? metaAvailability
         : !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
 
-      const metaPrice = extractMetaPrice(html)
+      const metaPrice = extractMetaPrice(html) ?? extractWooCommercePrice(html)
       let newPrice = listing.current_price
       if (metaPrice !== null) {
     newPrice = metaPrice
@@ -92,7 +99,7 @@ async function main() {
       const fallbackPrice = extractPrice(text)
       if (fallbackPrice !== null && listing.current_price) {
     const percentChange = Math.abs(fallbackPrice - listing.current_price) / listing.current_price
-    if (percentChange > 0.3) {
+    if (percentChange > 0.7) {
       console.warn(`Mistenkelig prisendring for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Beholder gammel pris.`)
     } else {
       newPrice = fallbackPrice
