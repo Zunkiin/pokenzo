@@ -35,6 +35,17 @@ function extractMetaPrice(html) {
   return isNaN(value) ? null : value
 }
 
+function extractMetaAvailability(html) {
+  const metaMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:availability|product:availability)["'][^>]*>/i)
+  if (!metaMatch) return null
+  const contentMatch = metaMatch[0].match(/content=["']([^"']+)["']/i)
+  if (!contentMatch) return null
+  const value = contentMatch[1].toLowerCase()
+  if (value.includes('instock') || value.includes('in stock')) return true
+  if (value.includes('outofstock') || value.includes('out of stock')) return false
+  return null
+}
+
 
 async function sendDiscordAlert(message) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL
@@ -65,7 +76,10 @@ async function main() {
 
       const html = await res.text()
       const text = stripHtml(html).toLowerCase()
-      const newInStock = !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
+      const metaAvailability = extractMetaAvailability(html)
+      const newInStock = metaAvailability !== null
+          ? metaAvailability
+          : !OUT_OF_STOCK_PHRASES.some(p => text.includes(p))
       const metaPrice = extractMetaPrice(html)
       const newPrice = metaPrice ?? extractPrice(text) ?? listing.current_price
       const productName = listing.products?.name ?? 'Ukjent produkt'
