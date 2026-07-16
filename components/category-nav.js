@@ -10,20 +10,31 @@ const categories = [
 
 export default function CategoryNav({ activeType }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
-      {categories.map((cat) => {
-        const isActive = activeType === cat.type
+    <div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {categories.map((cat) => {
+          const isActive = activeType === cat.type
 
-        const className = isActive
-          ? 'flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap bg-[#E8A33D] text-[#14151F] border border-[#E8A33D]'
-          : 'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors'
+          const className = isActive
+            ? 'flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap bg-[#E8A33D] text-[#14151F] border border-[#E8A33D]'
+            : 'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors'
 
-        return (
-          <Link key={cat.href} href={cat.href} className={className}>
-            {cat.label}
-          </Link>
-        )
-      })}
+          return (
+            <Link key={cat.href} href={cat.href} className={className}>
+              {cat.label}
+            </Link>
+          )
+        })}
+      </div>
+
+      <div className="mt-2">
+        <Link
+          href="/pokemon-go"
+          className="inline-block text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#1E2030] text-[#4FA8A0] border border-[#4FA8A0]/50 hover:border-[#4FA8A0] transition-colors"
+        >
+          Pokémon GO Hub
+        </Link>
+      </div>
     </div>
   )
 }

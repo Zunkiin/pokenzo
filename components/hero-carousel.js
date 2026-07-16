@@ -73,13 +73,7 @@ export default function HeroCarousel({ products }) {
           ))}
         </div>
       )}
-      <Link
-  href="/pokemon-go"
-  onClick={(e) => e.stopPropagation()}
-  className="absolute bottom-5 right-4 z-10 text-xs font-medium px-3 py-1.5 rounded-full bg-[#1E2030]/80 backdrop-blur border border-[#4A4D67] text-[#C7C9D9]"
->
-  Pokémon GO Hub
-</Link>
+      
     </div>
   )
 }
