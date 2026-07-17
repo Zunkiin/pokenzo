@@ -101,3 +101,20 @@ export async function deleteListingAction(formData) {
   await supabase.from('listings').delete().eq('id', formData.get('listing_id'))
   redirect('/admin')
 }
+
+export async function updateProductAction(formData) {
+  const supabase = getSupabaseAdmin()
+
+  await supabase
+    .from('products')
+    .update({
+      name: formData.get('product_name'),
+      product_type: formData.get('product_type'),
+      language: formData.get('language'),
+      image_url: formData.get('image_url') || null,
+      description: formData.get('description') || null,
+    })
+    .eq('id', formData.get('product_id'))
+
+  redirect('/admin')
+}

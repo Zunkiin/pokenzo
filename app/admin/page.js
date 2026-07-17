@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'
 import { loginAction, logoutAction, addStoreAction, addProductAction, addListingAction, deleteListingAction } from './actions'
@@ -37,9 +38,9 @@ export default async function AdminPage() {
   .select('id, name')
   .order('name')
   const { data: listings } = await supabase
-    .from('listings')
-    .select('id, current_price, currency, in_stock, products(name), stores(name)')
-    .order('id', { ascending: false })
+  .from('listings')
+  .select('id, product_id, current_price, currency, in_stock, products(name), stores(name)')
+  .order('id', { ascending: false })
 
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
@@ -180,20 +181,25 @@ export default async function AdminPage() {
           <h2 className="text-sm font-semibold mb-4">All listings</h2>
           <div className="space-y-2">
             {listings?.map((listing) => (
-              <div key={listing.id} className="flex items-center justify-between gap-2 text-sm py-2 border-b border-[#2A2C3D] last:border-0">
-                <div className="min-w-0">
-                  <p className="truncate">{listing.products?.name}</p>
-                  <p className="text-xs text-[#8A8C9C]">
-                    {listing.stores?.name} · {listing.current_price} {listing.currency} · {listing.in_stock ? 'In stock' : 'Out of stock'}
-                  </p>
-                </div>
-                <form action={deleteListingAction}>
-                  <input type="hidden" name="listing_id" value={listing.id} />
-                  <button type="submit" className="text-xs text-[#C1554A] hover:text-[#E8836F] flex-shrink-0">
-                    Delete
-                  </button>
-                </form>
-              </div>
+        <div key={listing.id} className="flex items-center justify-between gap-2 text-sm py-2 border-b border-[#2A2C3D] last:border-0">
+           <div className="min-w-0">
+           <p className="truncate">{listing.products?.name}</p>
+           <p className="text-xs text-[#8A8C9C]">
+                {listing.stores?.name} · {listing.current_price} {listing.currency} · {listing.in_stock ? 'In stock' : 'Out of stock'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+           <Link href={`/admin/edit/${listing.product_id}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
+         Edit
+         </Link>
+           <form action={deleteListingAction}>
+            <input type="hidden" name="listing_id" value={listing.id} />
+          <button type="submit" className="text-xs text-[#C1554A] hover:text-[#E8836F]">
+            Delete
+             </button>
+            </form>
+            </div>
+          </div>
             ))}
           </div>
         </div>
