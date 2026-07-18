@@ -12,7 +12,11 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [completingTrade, setCompletingTrade] = useState(false)
   const bottomRef = useRef(null)
+  const [myFeedback, setMyFeedback] = useState(null)
+  const [otherFeedback, setOtherFeedback] = useState(null)
+  const [feedbackComment, setFeedbackComment] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -24,6 +28,16 @@ export default function ChatPage() {
         .select('*')
         .eq('id', params.id)
         .maybeSingle()
+
+      const { data: allFeedback } = await supabaseClient
+         .from('trade_feedback')
+         .select('*')
+        .eq('chat_id', params.id)
+
+       const mine = allFeedback?.find((f) => f.user_id === userData.user.id)
+       const others = allFeedback?.find((f) => f.user_id !== userData.user.id)
+            setMyFeedback(mine || null)
+            setOtherFeedback(others || null)
 
       if (!chatData) { setLoading(false); return }
       setChat(chatData)
@@ -52,13 +66,16 @@ setLoading(false)
     load()
 
     const channel = supabaseClient
-      .channel('trade_messages_' + params.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trade_messages', filter: `chat_id=eq.${params.id}` }, (payload) => {
-        setMessages((prev) => [...prev, payload.new])
-      })
-      .subscribe()
+  .channel('trade_chat_' + params.id)
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trade_messages', filter: `chat_id=eq.${params.id}` }, (payload) => {
+    setMessages((prev) => [...prev, payload.new])
+  })
+  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'trade_chats', filter: `id=eq.${params.id}` }, (payload) => {
+    setChat((prev) => ({ ...prev, ...payload.new }))
+  })
+  .subscribe()
 
-    return () => { supabaseClient.removeChannel(channel) }
+return () => { supabaseClient.removeChannel(channel) }
   }, [params.id])
 
   useEffect(() => {
@@ -87,9 +104,33 @@ async function handleDeny() {
 }
 
 async function handleCompleteTrade() {
+  setCompletingTrade(true)
   await supabaseClient.from('trade_offers').update({ status: 'completed' }).eq('id', chat.trade_offer_id)
   await supabaseClient.from('trade_chats').update({ status: 'completed' }).eq('id', params.id)
   setChat((prev) => ({ ...prev, status: 'completed' }))
+  setCompletingTrade(false)
+}
+
+async function handleSubmitFeedback(wentWell) {
+  const { data, error } = await supabaseClient
+    .from('trade_feedback')
+    .insert({
+      chat_id: params.id,
+      user_id: user.id,
+      went_well: wentWell,
+      comment: feedbackComment || null,
+    })
+    .select()
+    .single()
+
+  if (!error) {
+    setMyFeedback(data)
+
+    if (otherFeedback) {
+      await supabaseClient.from('trade_chats').update({ status: 'closed' }).eq('id', params.id)
+      setChat((prev) => ({ ...prev, status: 'closed' }))
+    }
+  }
 }
 
   if (loading) {
@@ -130,8 +171,8 @@ async function handleCompleteTrade() {
 {chat.status === 'accepted' && (
   <div className="mb-4">
     <p className="text-xs text-[#4FA8A0] mb-2">✓ Trade accepted</p>
-    <button onClick={handleCompleteTrade} className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#4FA8A0] text-[#14151F]">
-      Mark trade as completed
+    <button onClick={handleCompleteTrade} disabled={completingTrade} className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#4FA8A0] text-[#14151F] disabled:opacity-50">
+        {completingTrade ? 'Completing...' : 'Mark trade as completed'}
     </button>
   </div>
 )}
@@ -139,9 +180,42 @@ async function handleCompleteTrade() {
   <p className="text-xs text-[#C1554A] mb-4">✗ Trade denied</p>
 )}
 {chat.status === 'completed' && (
-  <div className="mb-4 rounded-lg bg-[#4FA8A0]/10 border border-[#4FA8A0] p-3 text-center">
-    <p className="text-sm font-semibold text-[#4FA8A0]">🎉 Trade completed!</p>
-    <p className="text-xs text-[#8A8C9C] mt-1">Enjoy your new Pokémon!</p>
+  <div className="mb-4 rounded-lg bg-[#4FA8A0]/10 border border-[#4FA8A0] p-3">
+    <p className="text-sm font-semibold text-[#4FA8A0] text-center mb-3">🎉 Trade completed!</p>
+
+    {!myFeedback ? (
+      <div className="space-y-2">
+        <p className="text-xs text-[#C7C9D9] text-center mb-2">Did this trade go well?</p>
+        <div className="flex gap-2">
+          <button onClick={() => handleSubmitFeedback(true)} className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#4FA8A0] text-[#14151F]">
+            👍 Yes
+          </button>
+          <button onClick={() => handleSubmitFeedback(false)} className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#C1554A] text-[#14151F]">
+            👎 No
+          </button>
+        </div>
+      </div>
+    ) : (
+      <p className="text-xs text-[#8A8C9C] text-center">
+        You said this trade {myFeedback.went_well ? 'went well 👍' : 'did not go well 👎'}
+      </p>
+    )}
+
+    {otherFeedback ? (
+      <p className="text-xs text-[#8A8C9C] text-center mt-2">
+        {otherUsername} said this trade {otherFeedback.went_well ? 'went well 👍' : 'did not go well 👎'}
+      </p>
+    ) : (
+      <p className="text-xs text-[#5C5E70] text-center mt-2">
+        Waiting for {otherUsername}'s feedback...
+      </p>
+    )}
+
+    {myFeedback && otherFeedback && (
+      <p className="text-xs text-[#4FA8A0] text-center mt-2 font-semibold">
+        ✓ Both parties confirmed
+      </p>
+    )}
   </div>
 )}
 
@@ -162,8 +236,10 @@ async function handleCompleteTrade() {
           <div ref={bottomRef} />
         </div>
 
-        {chat.status === 'denied' ? (
-  <p className="text-sm text-[#8A8C9C] text-center py-2">This trade was denied. The chat is now closed.</p>
+        {chat.status === 'denied' || chat.status === 'closed' ? (
+  <p className="text-sm text-[#8A8C9C] text-center py-2">
+    {chat.status === 'closed' ? 'Both parties confirmed the trade. This chat is now closed.' : 'This trade was denied. The chat is now closed.'}
+  </p>
 ) : (
   <form onSubmit={handleSend} className="flex gap-2">
     <input

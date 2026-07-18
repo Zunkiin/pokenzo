@@ -25,13 +25,13 @@ export default function TradesPage() {
 }
 
   async function loadMyOffers(userId) {
-    const { data } = await supabaseClient
-      .from('trade_offers')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-    setMyOffers(data || [])
-  }
+  const { data } = await supabaseClient
+    .from('trade_offers')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  setMyOffers(data || [])
+}
 
   useEffect(() => {
     supabaseClient.auth.getUser().then(async ({ data }) => {

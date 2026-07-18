@@ -10,6 +10,7 @@ export default function TradeDetailPage() {
   const [offer, setOffer] = useState(null)
   const [user, setUser] = useState(null)
   const [existingChatId, setExistingChatId] = useState(null)
+  const [relatedChats, setRelatedChats] = useState([])
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
 
@@ -26,18 +27,48 @@ export default function TradeDetailPage() {
       setOffer(offerData)
 
       if (userData.user && offerData) {
-        const { data: chat } = await supabaseClient
-          .from('trade_chats')
-          .select('id')
-          .eq('trade_offer_id', offerData.id)
-          .eq('initiator_id', userData.user.id)
-          .maybeSingle()
-        if (chat) setExistingChatId(chat.id)
+        const isOwnOffer = userData.user.id === offerData.user_id
+
+        if (isOwnOffer) {
+          const { data: chats } = await supabaseClient
+            .from('trade_chats')
+            .select('id, initiator_id, status')
+            .eq('trade_offer_id', offerData.id)
+
+          const chatsWithNames = await Promise.all(
+            (chats || []).map(async (chat) => {
+              const { data: initiatorProfile } = await supabaseClient
+                .from('profiles')
+                .select('username')
+                .eq('id', chat.initiator_id)
+                .maybeSingle()
+              return { ...chat, initiatorUsername: initiatorProfile?.username || 'Unknown' }
+            })
+          )
+          setRelatedChats(chatsWithNames)
+        } else {
+          const { data: chat } = await supabaseClient
+            .from('trade_chats')
+            .select('id')
+            .eq('trade_offer_id', offerData.id)
+            .eq('initiator_id', userData.user.id)
+            .maybeSingle()
+          if (chat) setExistingChatId(chat.id)
+        }
       }
 
       setLoading(false)
     }
     load()
+
+    const channel = supabaseClient
+      .channel('trade_offer_chats_' + params.id)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'trade_chats', filter: `trade_offer_id=eq.${params.id}` }, (payload) => {
+        setRelatedChats((prev) => prev.map((chat) => chat.id === payload.new.id ? { ...chat, status: payload.new.status } : chat))
+      })
+      .subscribe()
+
+    return () => { supabaseClient.removeChannel(channel) }
   }, [params.id])
 
   async function handleStartChat() {
@@ -116,7 +147,26 @@ export default function TradeDetailPage() {
               <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to start a chat about this trade.
             </p>
           ) : isOwnOffer ? (
-            <p className="text-sm text-[#8A8C9C]">This is your own trade offer.</p>
+            <div>
+              <p className="text-sm text-[#8A8C9C] mb-3">This is your own trade offer.</p>
+              {relatedChats.length === 0 ? (
+                <p className="text-xs text-[#8A8C9C]">No one has started a chat about this yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-[#8A8C9C] mb-2">Chats about this offer:</p>
+                  {relatedChats.map((chat) => (
+                    <Link
+                      key={chat.id}
+                      href={`/t/pokemon-go/chats/${chat.id}`}
+                      className="flex items-center justify-between text-sm bg-[#14151F] rounded-lg p-3 hover:bg-[#2A2C3D] transition-colors"
+                    >
+                      <span>{chat.initiatorUsername}</span>
+                      <span className="text-xs text-[#8A8C9C]">{chat.status}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : existingChatId ? (
             <Link href={`/t/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
               Continue chat
