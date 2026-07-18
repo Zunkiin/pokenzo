@@ -4,6 +4,7 @@ import { supabaseClient } from '@/lib/supabaseClient'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 
+
 const AUTO_CLOSE_HOURS = 1
 
 export default function ChatPage() {
@@ -19,6 +20,7 @@ export default function ChatPage() {
   const [myFeedback, setMyFeedback] = useState(null)
   const [otherFeedback, setOtherFeedback] = useState(null)
   const [feedbackComment, setFeedbackComment] = useState('')
+  const [otherGoCode, setOtherGoCode] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -57,10 +59,11 @@ if (chatData.status === 'completed' && chatData.completed_at) {
       const otherId = chatData.initiator_id === userData.user?.id ? chatData.offer_owner_id : chatData.initiator_id
       const { data: otherProfile } = await supabaseClient
         .from('profiles')
-        .select('username')
+        .select('username, go_friend_code')
         .eq('id', otherId)
         .maybeSingle()
       setOtherUsername(otherProfile?.username || 'Unknown')
+      setOtherGoCode(otherProfile?.go_friend_code || null)
 
       const { data: msgs } = await supabaseClient
   .from('trade_messages')
@@ -186,6 +189,11 @@ async function handleSubmitFeedback(wentWell) {
   <p className="text-xs text-[#8A8C9C] mt-1">
     <span className="text-[#E8A33D]">{chat?.trade_offers?.have_pokemon}</span> ↔ <span className="text-[#4FA8A0]">{chat?.trade_offers?.want_pokemon}</span>
   </p>
+  {otherGoCode && (
+    <p className="text-xs text-[#4FA8A0] mt-2 bg-[#1E2030] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
+      GO friend code: <span className="font-mono font-semibold">{otherGoCode}</span>
+    </p>
+  )}
 </div>
 
 {chat.status === 'pending' && chat.offer_owner_id === user.id && (

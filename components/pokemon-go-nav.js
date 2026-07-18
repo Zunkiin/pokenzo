@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { supabaseClient } from '@/lib/supabaseClient'
 
 const tabs = [
-  { label: 'Profile', href: '/t/pokemon-go' },
+  { label: 'Home', href: '/t/pokemon-go' },
   { label: 'Trade Offers', href: '/t/pokemon-go/trades' },
   { label: 'Raids', href: '/t/pokemon-go/raids' },
   { label: 'My Chats', href: '/t/pokemon-go/chats' },
@@ -24,6 +24,7 @@ export default function PokemonGoNav() {
         .from('trade_chats')
         .select('id, initiator_id, offer_owner_id, initiator_last_read, owner_last_read')
         .or(`initiator_id.eq.${userData.user.id},offer_owner_id.eq.${userData.user.id}`)
+        .not('status', 'in', '(closed,denied)')
 
       let total = 0
       for (const chat of chatRows || []) {

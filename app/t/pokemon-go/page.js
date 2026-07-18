@@ -7,7 +7,6 @@ import PokemonGoNav from '@/components/pokemon-go-nav'
 const PENDING_USERNAME_KEY = 'pokenzo_pending_username'
 
 export default function PokemonGoTestPage() {
-  const [mode, setMode] = useState('magic')
   const [isSignUp, setIsSignUp] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,6 +20,7 @@ export default function PokemonGoTestPage() {
   const [editingProfile, setEditingProfile] = useState(false)
   const [goCode, setGoCode] = useState('')
   const [goLevel, setGoLevel] = useState('')
+  const [showGoCodePublicly, setShowGoCodePublicly] = useState(false)
 
   async function loadProfile(userId) {
     const { data: existing } = await supabaseClient
@@ -33,6 +33,7 @@ export default function PokemonGoTestPage() {
       setProfile(existing)
       setGoCode(existing.go_friend_code || '')
       setGoLevel(existing.go_level || '')
+      setShowGoCodePublicly(existing.show_go_code_publicly || false)
       return
     }
 
@@ -75,18 +76,6 @@ export default function PokemonGoTestPage() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  async function handleMagicLink(e) {
-    e.preventDefault()
-    setErrorMsg('')
-    if (isSignUp) localStorage.setItem(PENDING_USERNAME_KEY, username)
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + '/t/pokemon-go' }
-    })
-    if (error) setErrorMsg(error.message)
-    else setSent(true)
-  }
-
   async function handlePasswordAuth(e) {
     e.preventDefault()
     setErrorMsg('')
@@ -124,7 +113,11 @@ export default function PokemonGoTestPage() {
     e.preventDefault()
     const { error } = await supabaseClient
       .from('profiles')
-      .update({ go_friend_code: goCode || null, go_level: goLevel ? parseInt(goLevel) : null })
+      .update({
+        go_friend_code: goCode || null,
+        go_level: goLevel ? parseInt(goLevel) : null,
+        show_go_code_publicly: showGoCodePublicly,
+      })
       .eq('id', user.id)
     if (!error) {
       await loadProfile(user.id)
@@ -147,58 +140,63 @@ export default function PokemonGoTestPage() {
         <PokemonGoNav />
 
         {user && profile && (
-          <>
-            <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="font-medium">{profile.username}</p>
+          <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="font-medium">{profile.username}</p>
                 <Link href={`/t/pokemon-go/${profile.username}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
-                  
+                  View my public profile →
                 </Link>
                 <Link href="/t/pokemon-go/trades" className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
                   
                 </Link>
                 <Link href="/t/pokemon-go/chats" className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
-                 
+                  
                 </Link>
-                </div>
-                <button onClick={handleLogout} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
-                  Log out
-                </button>
               </div>
+              <button onClick={handleLogout} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
+                Log out
+              </button>
+            </div>
 
-              {editingProfile ? (
-                <form onSubmit={handleUpdateProfile} className="space-y-3 pt-3 border-t border-[#2A2C3D]">
+            {editingProfile ? (
+              <form onSubmit={handleUpdateProfile} className="space-y-3 pt-3 border-t border-[#2A2C3D]">
+                <input
+                  value={goCode} onChange={(e) => setGoCode(e.target.value)}
+                  placeholder="Pokémon GO friend code"
+                  className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                />
+                <input
+                  type="number" value={goLevel} onChange={(e) => setGoLevel(e.target.value)}
+                  placeholder="Trainer level"
+                  className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                />
+                <label className="flex items-center gap-2 text-sm text-[#C7C9D9]">
                   <input
-                    value={goCode} onChange={(e) => setGoCode(e.target.value)}
-                    placeholder="Pokémon GO friend code"
-                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                    type="checkbox" checked={showGoCodePublicly} onChange={(e) => setShowGoCodePublicly(e.target.checked)}
+                    className="accent-[#E8A33D]"
                   />
-                  <input
-                    type="number" value={goLevel} onChange={(e) => setGoLevel(e.target.value)}
-                    placeholder="Trainer level"
-                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                  />
-                  <div className="flex gap-2">
-                    <button type="submit" className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
-                      Save
-                    </button>
-                    <button type="button" onClick={() => setEditingProfile(false)} className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="pt-3 border-t border-[#2A2C3D] text-sm">
-                  <p className="text-[#C7C9D9]">GO code: {profile.go_friend_code || '—'}</p>
-                  <p className="text-[#C7C9D9] mb-3">Trainer level: {profile.go_level || '—'}</p>
-                  <button onClick={() => setEditingProfile(true)} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
-                    Edit profile
+                  Show my GO code on my public profile
+                </label>
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
+                    Save
+                  </button>
+                  <button type="button" onClick={() => setEditingProfile(false)} className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
+                    Cancel
                   </button>
                 </div>
-              )}
-            </div>
-          </>
+              </form>
+            ) : (
+              <div className="pt-3 border-t border-[#2A2C3D] text-sm">
+                <p className="text-[#C7C9D9]">GO code: {profile.go_friend_code || '—'}</p>
+                <p className="text-[#C7C9D9] mb-3">Trainer level: {profile.go_level || '—'}</p>
+                <button onClick={() => setEditingProfile(true)} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
+                  
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         {user && !profile && (
@@ -223,17 +221,6 @@ export default function PokemonGoTestPage() {
 
         {!user && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
-            <div className="flex gap-2 mb-4">
-              <button onClick={() => { setMode('magic'); setSent(false); setErrorMsg('') }}
-                className={'flex-1 text-sm font-medium px-3 py-2 rounded-lg ' + (mode === 'magic' ? 'bg-[#E8A33D] text-[#14151F]' : 'bg-[#14151F] text-[#8A8C9C] border border-[#2A2C3D]')}>
-                Magic Link
-              </button>
-              <button onClick={() => { setMode('password'); setSent(false); setErrorMsg('') }}
-                className={'flex-1 text-sm font-medium px-3 py-2 rounded-lg ' + (mode === 'password' ? 'bg-[#E8A33D] text-[#14151F]' : 'bg-[#14151F] text-[#8A8C9C] border border-[#2A2C3D]')}>
-                Password
-              </button>
-            </div>
-
             <div className="flex gap-2 mb-4 text-xs">
               <button onClick={() => { setIsSignUp(true); setSent(false); setErrorMsg('') }}
                 className={isSignUp ? 'text-[#E8A33D] font-semibold' : 'text-[#8A8C9C]'}>
@@ -247,23 +234,7 @@ export default function PokemonGoTestPage() {
             </div>
 
             {sent ? (
-              <p className="text-sm text-[#C7C9D9]">
-                {mode === 'magic' ? 'Check your email for a login link.' : 'Check your email to confirm your account, then log in.'}
-              </p>
-            ) : mode === 'magic' ? (
-              <form onSubmit={handleMagicLink} className="space-y-3">
-                <p className="text-sm text-[#8A8C9C]">Enter your email to get a magic login link.</p>
-                {isSignUp && (
-                  <input required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose a username"
-                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
-                )}
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com"
-                  className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
-                {errorMsg && <p className="text-xs text-[#C1554A]">{errorMsg}</p>}
-                <button type="submit" className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
-                  Send login link
-                </button>
-              </form>
+              <p className="text-sm text-[#C7C9D9]">Check your email to confirm your account, then log in.</p>
             ) : (
               <form onSubmit={handlePasswordAuth} className="space-y-3">
                 {isSignUp && (
@@ -278,6 +249,11 @@ export default function PokemonGoTestPage() {
                 <button type="submit" className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
                   {isSignUp ? 'Sign up' : 'Log in'}
                 </button>
+                {!isSignUp && (
+                  <Link href="/t/pokemon-go/forgot-password" className="block text-center text-xs text-[#8A8C9C] hover:text-[#E8A33D]">
+                    Forgot password?
+                  </Link>
+                )}
               </form>
             )}
           </div>
