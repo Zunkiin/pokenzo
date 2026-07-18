@@ -139,10 +139,22 @@ async function handleSubmitFeedback(wentWell) {
   if (!error) {
     setMyFeedback(data)
 
-    if (otherFeedback) {
-      await supabaseClient.from('trade_chats').update({ status: 'closed' }).eq('id', params.id)
-      setChat((prev) => ({ ...prev, status: 'closed' }))
-    }
+    const { data: freshFeedback } = await supabaseClient
+      .from('trade_feedback')
+      .select('*')
+      .eq('chat_id', params.id)
+
+    const bothSubmitted = freshFeedback && freshFeedback.length >= 2
+
+    if (bothSubmitted) {
+    await supabaseClient.from('trade_chats').update({ status: 'closed' }).eq('id', params.id)
+    await supabaseClient.from('trade_offers').update({ status: 'completed' }).eq('id', chat.trade_offer_id)
+    setChat((prev) => ({ ...prev, status: 'closed' }))
+
+    const otherOne = freshFeedback.find((f) => f.user_id !== user.id)
+    if (otherOne) setOtherFeedback(otherOne)
+  }
+
   }
 }
 
