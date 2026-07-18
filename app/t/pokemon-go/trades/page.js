@@ -29,6 +29,7 @@ export default function TradesPage() {
     .from('trade_offers')
     .select('*')
     .eq('user_id', userId)
+    .eq('status', 'active')
     .order('created_at', { ascending: false })
   setMyOffers(data || [])
 }
@@ -103,22 +104,23 @@ export default function TradesPage() {
               <div className="mt-4 pt-4 border-t border-[#2A2C3D] space-y-2">
                 <p className="text-xs text-[#8A8C9C] mb-2">Your active offers</p>
                 {myOffers.map((offer) => (
-                  <div key={offer.id} className="flex items-start justify-between text-sm bg-[#14151F] rounded-lg p-3">
-                    <div>
-                      <p>Have: <span className="text-[#E8A33D]">{offer.have_pokemon}</span></p>
-                      <p>Want: <span className="text-[#4FA8A0]">{offer.want_pokemon}</span></p>
-                      {offer.notes && <p className="text-xs text-[#8A8C9C] mt-1">{offer.notes}</p>}
-                    </div>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                      <Link href={`/t/pokemon-go/trades/${offer.id}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
-                        See chats
-                      </Link>
-                      <button onClick={() => handleDeleteOffer(offer.id)} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <div key={offer.id} className="flex items-start justify-between text-sm bg-[#14151F] rounded-lg p-3">
+                 <div>
+                 <p>Have: <span className="text-[#E8A33D]">{offer.have_pokemon}</span></p>
+                <p>Want: <span className="text-[#4FA8A0]">{offer.want_pokemon}</span></p>
+                  {offer.notes && <p className="text-xs text-[#8A8C9C] mt-1">{offer.notes}</p>}
+                
+            </div>
+            <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
+             <Link href={`/t/pokemon-go/trades/${offer.id}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
+                 See chats
+            </Link>
+            <button onClick={() => handleDeleteOffer(offer.id)} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
+                     Delete
+            </button>
+            </div>
+            </div>
+        ))}
               </div>
             )}
           </div>

@@ -21,8 +21,9 @@ export default function ChatsListPage() {
 
       const { data: chatRows } = await supabaseClient
         .from('trade_chats')
-        .select('id, initiator_id, offer_owner_id, initiator_last_read, owner_last_read, trade_offer_id, trade_offers(have_pokemon, want_pokemon)')
+        .select('id, initiator_id, offer_owner_id, initiator_last_read, owner_last_read, trade_offer_id, status, trade_offers(have_pokemon, want_pokemon)')
         .or(`initiator_id.eq.${userData.user.id},offer_owner_id.eq.${userData.user.id}`)
+        .not('status', 'in', '(closed,denied)')
         .order('created_at', { ascending: false })
 
       const withNames = await Promise.all(
@@ -89,22 +90,22 @@ export default function ChatsListPage() {
         <div className="space-y-3">
           {chats.map((chat) => (
             <Link
-              key={chat.id}
-              href={`/t/pokemon-go/chats/${chat.id}`}
-              className="flex items-center justify-between rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
-            >
-              <div>
-                <p className="font-medium mb-1">{chat.otherUsername}</p>
-                <p className="text-xs text-[#8A8C9C]">
-                  {chat.trade_offers?.have_pokemon} ↔ {chat.trade_offers?.want_pokemon}
-                </p>
-              </div>
-              {chat.unreadCount > 0 && (
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#C1554A] text-white text-xs font-semibold flex items-center justify-center">
-                  {chat.unreadCount}
+                 key={chat.id}
+                href={`/t/pokemon-go/chats/${chat.id}`}
+                className="flex items-center justify-between rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
+           >
+            <div>
+            <p className="font-medium mb-1">
+                <span className="text-[#E8A33D]">{chat.trade_offers?.have_pokemon}</span> ↔ <span className="text-[#4FA8A0]">{chat.trade_offers?.want_pokemon}</span>
+            </p>
+            <p className="text-xs text-[#8A8C9C]">{chat.otherUsername}</p>
+        </div>
+        {chat.unreadCount > 0 && (
+            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#C1554A] text-white text-xs font-semibold flex items-center justify-center">
+                {chat.unreadCount}
                 </span>
-              )}
-            </Link>
+         )}
+        </Link>
           ))}
         </div>
       </div>

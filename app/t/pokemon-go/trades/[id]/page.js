@@ -21,10 +21,10 @@ export default function TradeDetailPage() {
 
       const { data: offerData } = await supabaseClient
         .from('trade_offers')
-        .select('id, have_pokemon, want_pokemon, notes, user_id, profiles(username, go_level)')
+        .select('id, have_pokemon, want_pokemon, notes, user_id, status, profiles(username, go_level)')
         .eq('id', params.id)
         .maybeSingle()
-      setOffer(offerData)
+        setOffer(offerData)
 
       if (userData.user && offerData) {
         const isOwnOffer = userData.user.id === offerData.user_id
@@ -168,18 +168,20 @@ export default function TradeDetailPage() {
               )}
             </div>
           ) : existingChatId ? (
-            <Link href={`/t/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
-              Continue chat
-            </Link>
-          ) : (
-            <button
-              onClick={handleStartChat}
-              disabled={starting}
-              className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F] disabled:opacity-50"
-            >
-              {starting ? 'Starting...' : 'Start chat about this trade'}
-            </button>
-          )}
+        <Link href={`/t/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
+            Continue chat
+        </Link>
+    ) : offer.status === 'completed' ? (
+        <p className="text-sm text-[#8A8C9C]">This trade has already been completed and is no longer available.</p>
+    ) : (
+        <button
+            onClick={handleStartChat}
+            disabled={starting}
+            className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F] disabled:opacity-50"
+        >
+            {starting ? 'Starting...' : 'Start chat about this trade'}
+        </button>
+        )}
         </div>
       </div>
     </main>

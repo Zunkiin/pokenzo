@@ -4,6 +4,8 @@ import { supabaseClient } from '@/lib/supabaseClient'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 
+const AUTO_CLOSE_HOURS = 1
+
 export default function ChatPage() {
   const params = useParams()
   const [user, setUser] = useState(null)
@@ -25,7 +27,7 @@ export default function ChatPage() {
 
       const { data: chatData } = await supabaseClient
         .from('trade_chats')
-        .select('*')
+        .select('*, trade_offers(have_pokemon, want_pokemon)')
         .eq('id', params.id)
         .maybeSingle()
 
@@ -41,6 +43,16 @@ export default function ChatPage() {
 
       if (!chatData) { setLoading(false); return }
       setChat(chatData)
+
+if (chatData.status === 'completed' && chatData.completed_at) {
+  const completedTime = new Date(chatData.completed_at).getTime()
+  const hoursPassed = (Date.now() - completedTime) / 1000 / 60 / 60
+  if (hoursPassed >= AUTO_CLOSE_HOURS) {
+    await supabaseClient.from('trade_chats').update({ status: 'closed' }).eq('id', params.id)
+    chatData.status = 'closed'
+    setChat(chatData)
+  }
+}
 
       const otherId = chatData.initiator_id === userData.user?.id ? chatData.offer_owner_id : chatData.initiator_id
       const { data: otherProfile } = await supabaseClient
@@ -105,9 +117,10 @@ async function handleDeny() {
 
 async function handleCompleteTrade() {
   setCompletingTrade(true)
+  const now = new Date().toISOString()
   await supabaseClient.from('trade_offers').update({ status: 'completed' }).eq('id', chat.trade_offer_id)
-  await supabaseClient.from('trade_chats').update({ status: 'completed' }).eq('id', params.id)
-  setChat((prev) => ({ ...prev, status: 'completed' }))
+  await supabaseClient.from('trade_chats').update({ status: 'completed', completed_at: now }).eq('id', params.id)
+  setChat((prev) => ({ ...prev, status: 'completed', completed_at: now }))
   setCompletingTrade(false)
 }
 
@@ -156,7 +169,12 @@ async function handleSubmitFeedback(wentWell) {
           ← Back to trades
         </Link>
 
-        <h1 className="text-lg font-semibold mb-4">Chat with {otherUsername}</h1>
+        <div className="mb-4">
+  <h1 className="text-lg font-semibold">Chat with {otherUsername}</h1>
+  <p className="text-xs text-[#8A8C9C] mt-1">
+    <span className="text-[#E8A33D]">{chat?.trade_offers?.have_pokemon}</span> ↔ <span className="text-[#4FA8A0]">{chat?.trade_offers?.want_pokemon}</span>
+  </p>
+</div>
 
 {chat.status === 'pending' && chat.offer_owner_id === user.id && (
   <div className="flex gap-2 mb-4">

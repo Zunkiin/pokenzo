@@ -19,10 +19,17 @@ export default async function PublicProfilePage({ params }) {
   }
 
   const { data: offers } = await supabase
-    .from('trade_offers')
-    .select('*')
-    .eq('user_id', profile.id)
-    .order('created_at', { ascending: false })
+  .from('trade_offers')
+  .select('*')
+  .eq('user_id', profile.id)
+  .eq('status', 'active')
+  .order('created_at', { ascending: false })
+
+const { count: completedCount } = await supabase
+  .from('trade_offers')
+  .select('id', { count: 'exact', head: true })
+  .eq('user_id', profile.id)
+  .eq('status', 'completed')
 
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
@@ -34,6 +41,7 @@ export default async function PublicProfilePage({ params }) {
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
           <h1 className="text-xl font-semibold mb-1">{profile.username}</h1>
           <p className="text-sm text-[#C7C9D9]">Trainer level: {profile.go_level || '—'}</p>
+          <p className="text-sm text-[#4FA8A0] mt-1">{completedCount || 0} trades completed</p>
         </div>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
