@@ -20,11 +20,11 @@ export default function TradeDetailPage() {
       setUser(userData.user)
 
       const { data: offerData } = await supabaseClient
-        .from('trade_offers')
-        .select('id, have_pokemon, want_pokemon, notes, user_id, status, profiles(username, go_level)')
-        .eq('id', params.id)
-        .maybeSingle()
-        setOffer(offerData)
+      .from('trade_offers')
+      .select('id, have_pokemon, have_shiny, want_pokemon, want_shiny, notes, user_id, status, profiles(username, go_level)')
+      .eq('id', params.id)
+      .maybeSingle()
+      setOffer(offerData)
 
       if (userData.user && offerData) {
         const isOwnOffer = userData.user.id === offerData.user_id
@@ -122,17 +122,14 @@ export default function TradeDetailPage() {
           {offer.profiles?.go_level && (
             <p className="text-xs text-[#8A8C9C] mt-1">Trainer level: {offer.profiles.go_level}</p>
           )}
-        </div>
-
-        <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 space-y-3">
-          <div>
+        <div>
             <p className="text-xs text-[#8A8C9C] mb-1">Has</p>
-            <p className="text-lg font-semibold text-[#E8A33D]">{offer.have_pokemon}</p>
-          </div>
-          <div>
+            <p className="text-lg font-semibold text-[#E8A33D]">{offer.have_pokemon}{offer.have_shiny && ' ✨ Shiny'}</p>
+        </div>
+        <div>
             <p className="text-xs text-[#8A8C9C] mb-1">Wants</p>
-            <p className="text-lg font-semibold text-[#4FA8A0]">{offer.want_pokemon}</p>
-          </div>
+            <p className="text-lg font-semibold text-[#4FA8A0]">{offer.want_pokemon}{offer.want_shiny && ' ✨ Shiny'}</p>
+      </div>
           {offer.notes && (
             <div>
               <p className="text-xs text-[#8A8C9C] mb-1">Notes</p>

@@ -6,6 +6,7 @@ import { supabaseClient } from '@/lib/supabaseClient'
 
 const tabs = [
   { label: 'Home', href: '/t/pokemon-go' },
+  { label: 'Community Chat', href: '/t/pokemon-go/community-chat' },
   { label: 'Trade Offers', href: '/t/pokemon-go/trades' },
   { label: 'Raids', href: '/t/pokemon-go/raids' },
   { label: 'My Chats', href: '/t/pokemon-go/chats' },

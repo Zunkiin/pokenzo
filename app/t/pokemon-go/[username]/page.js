@@ -1,11 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 
 export default function PublicProfilePage() {
+  const router = useRouter()
+  const [raidsHostedCount, setRaidsHostedCount] = useState(0)
+  const [raidsJoinedCount, setRaidsJoinedCount] = useState(0)
+  const [raidReputation, setRaidReputation] = useState(null)
   const params = useParams()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -52,10 +56,42 @@ export default function PublicProfilePage() {
         .eq('user_id', profileData.id)
         .eq('status', 'completed')
       setCompletedCount(count || 0)
+
+      const { count: raidsHosted } = await supabaseClient
+  .from('raids')
+  .select('id', { count: 'exact', head: true })
+  .eq('host_id', profileData.id)
+  .eq('status', 'closed')
+setRaidsHostedCount(raidsHosted || 0)
+
+const { count: raidsJoined } = await supabaseClient
+  .from('raid_joins')
+  .select('id', { count: 'exact', head: true })
+  .eq('user_id', profileData.id)
+  .eq('confirmed', true)
+setRaidsJoinedCount(raidsJoined || 0)
+
+const { data: feedbackReceived } = await supabaseClient
+  .from('raid_feedback')
+  .select('went_well')
+  .eq('rated_user_id', profileData.id)
+
+if (feedbackReceived && feedbackReceived.length > 0) {
+  const positive = feedbackReceived.filter((f) => f.went_well).length
+  setRaidReputation({
+    percent: Math.round((positive / feedbackReceived.length) * 100),
+    total: feedbackReceived.length,
+  })
+} else {
+  setRaidReputation(null)
+}
     }
+    
 
     setLoading(false)
   }
+
+  
 
   useEffect(() => {
     loadData()
@@ -122,9 +158,9 @@ export default function PublicProfilePage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          ← Back
-        </Link>
+        <button onClick={() => router.back()} className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        ← Back
+      </button>
         {isOwnProfile && <PokemonGoNav />}
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
@@ -183,6 +219,10 @@ export default function PublicProfilePage() {
             <>
               <p className="text-sm text-[#C7C9D9]">Trainer level: {profile.go_level || '—'}</p>
               <p className="text-sm text-[#4FA8A0] mt-1">{completedCount} trades completed</p>
+              <p className="text-sm text-[#C7C9D9] mt-1">{raidsHostedCount} raids hosted · {raidsJoinedCount} raids joined</p>
+                {raidReputation && (
+              <p className="text-sm text-[#4FA8A0] mt-1">{raidReputation.percent}% positive raid feedback ({raidReputation.total} ratings)</p>
+            )}
               {profile.show_go_code_publicly && profile.go_friend_code && (
                 <p className="text-xs text-[#4FA8A0] mt-2 bg-[#14151F] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
                   GO friend code: <span className="font-mono font-semibold">{profile.go_friend_code}</span>

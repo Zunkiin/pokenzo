@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { containsLink } from '@/lib/contentFilters'
 
 
 const AUTO_CLOSE_HOURS = 1
@@ -29,7 +30,7 @@ export default function ChatPage() {
 
       const { data: chatData } = await supabaseClient
         .from('trade_chats')
-        .select('*, trade_offers(have_pokemon, want_pokemon)')
+        .select('*, trade_offers(have_pokemon, have_shiny, want_pokemon, want_shiny)')
         .eq('id', params.id)
         .maybeSingle()
 
@@ -98,8 +99,12 @@ return () => { supabaseClient.removeChannel(channel) }
   }, [messages])
 
   async function handleSend(e) {
-    e.preventDefault()
-    if (!newMessage.trim()) return
+  e.preventDefault()
+  if (!newMessage.trim()) return
+
+  if (containsLink(newMessage)) {
+    return
+  }
     await supabaseClient.from('trade_messages').insert({
       chat_id: params.id,
       sender_id: user.id,
@@ -150,7 +155,7 @@ async function handleSubmitFeedback(wentWell) {
     const bothSubmitted = freshFeedback && freshFeedback.length >= 2
 
     if (bothSubmitted) {
-    await supabaseClient.from('trade_chats').update({ status: 'closed' }).eq('id', params.id)
+    await supabaseClient.from('trade_chats').update({ status: 'closed' }).eq('trade_offer_id', chat.trade_offer_id)
     await supabaseClient.from('trade_offers').update({ status: 'completed' }).eq('id', chat.trade_offer_id)
     setChat((prev) => ({ ...prev, status: 'closed' }))
 
@@ -187,8 +192,8 @@ async function handleSubmitFeedback(wentWell) {
         <div className="mb-4">
   <h1 className="text-lg font-semibold">Chat with {otherUsername}</h1>
   <p className="text-xs text-[#8A8C9C] mt-1">
-    <span className="text-[#E8A33D]">{chat?.trade_offers?.have_pokemon}</span> ↔ <span className="text-[#4FA8A0]">{chat?.trade_offers?.want_pokemon}</span>
-  </p>
+  <span className="text-[#E8A33D]">{chat?.trade_offers?.have_pokemon}{chat?.trade_offers?.have_shiny && ' ✨'}</span> ↔ <span className="text-[#4FA8A0]">{chat?.trade_offers?.want_pokemon}{chat?.trade_offers?.want_shiny && ' ✨'}</span>
+</p>
   {otherGoCode && (
     <p className="text-xs text-[#4FA8A0] mt-2 bg-[#1E2030] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
       GO friend code: <span className="font-mono font-semibold">{otherGoCode}</span>
