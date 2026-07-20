@@ -135,14 +135,14 @@ export default function PokemonGoTestPage() {
                   </div>
                 )}
                 <div>
-                <p className="font-medium">{profile.username}</p>
-                <p className="text-xs text-[#8A8C9C]">
-                  GO code: {profile.go_friend_code || '—'} · Level {profile.go_level || '—'}
-                </p>
-                <Link href={`/t/pokemon-go/${profile.username}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
-                  View my public profile →
-                </Link>
-              </div>
+                  <p className="font-medium">{profile.username}</p>
+                  <p className="text-xs text-[#8A8C9C]">
+                    GO code: {profile.go_friend_code || '—'} · Level {profile.go_level || '—'}
+                  </p>
+                  <Link href={`/t/pokemon-go/${profile.username}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
+                    View my public profile →
+                  </Link>
+                </div>
               </div>
               <button onClick={handleLogout} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
                 Log out
@@ -151,12 +151,7 @@ export default function PokemonGoTestPage() {
           </div>
         )}
 
-        
-          href="https://pokemongolive.com/news/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
-        >
+        <a href="https://pokemongolive.com/news/" target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors">
           <p className="text-xs uppercase tracking-[0.15em] text-[#E8A33D] font-semibold mb-1">Latest news</p>
           <p className="text-sm text-[#EDEAE3]">Check the official Pokémon GO news and events →</p>
         </a>
