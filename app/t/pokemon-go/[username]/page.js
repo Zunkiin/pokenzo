@@ -6,25 +6,26 @@ import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 import { ArrowLeft } from 'lucide-react'
 import TrainerAvatarPicker from '@/components/trainer-avatar-picker'
+import PokemonPicker from '@/components/pokemon-picker'
 
 export default function PublicProfilePage() {
   const router = useRouter()
+  const params = useParams()
   const [raidsHostedCount, setRaidsHostedCount] = useState(0)
   const [raidsJoinedCount, setRaidsJoinedCount] = useState(0)
   const [raidReputation, setRaidReputation] = useState(null)
-  const params = useParams()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [offers, setOffers] = useState([])
   const [completedCount, setCompletedCount] = useState(0)
   const [loading, setLoading] = useState(true)
-
   const [editingProfile, setEditingProfile] = useState(false)
   const [goCode, setGoCode] = useState('')
   const [goLevel, setGoLevel] = useState('')
   const [goTrainerName, setGoTrainerName] = useState('')
   const [showGoCodePublicly, setShowGoCodePublicly] = useState(false)
-
+  const [avatarTrainerUrl, setAvatarTrainerUrl] = useState('')
+  const [avatarPokemonUrl, setAvatarPokemonUrl] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
@@ -45,6 +46,8 @@ export default function PublicProfilePage() {
       setGoLevel(profileData.go_level || '')
       setGoTrainerName(profileData.go_trainer_name || '')
       setShowGoCodePublicly(profileData.show_go_code_publicly || false)
+      setAvatarTrainerUrl(profileData.avatar_trainer_url || '')
+      setAvatarPokemonUrl(profileData.avatar_pokemon_url || '')
 
       const { data: offersData } = await supabaseClient
         .from('trade_offers')
@@ -62,40 +65,37 @@ export default function PublicProfilePage() {
       setCompletedCount(count || 0)
 
       const { count: raidsHosted } = await supabaseClient
-  .from('raids')
-  .select('id', { count: 'exact', head: true })
-  .eq('host_id', profileData.id)
-  .eq('status', 'closed')
-setRaidsHostedCount(raidsHosted || 0)
+        .from('raids')
+        .select('id', { count: 'exact', head: true })
+        .eq('host_id', profileData.id)
+        .eq('status', 'closed')
+      setRaidsHostedCount(raidsHosted || 0)
 
-const { count: raidsJoined } = await supabaseClient
-  .from('raid_joins')
-  .select('id', { count: 'exact', head: true })
-  .eq('user_id', profileData.id)
-  .eq('confirmed', true)
-setRaidsJoinedCount(raidsJoined || 0)
+      const { count: raidsJoined } = await supabaseClient
+        .from('raid_joins')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', profileData.id)
+        .eq('confirmed', true)
+      setRaidsJoinedCount(raidsJoined || 0)
 
-const { data: feedbackReceived } = await supabaseClient
-  .from('raid_feedback')
-  .select('went_well')
-  .eq('rated_user_id', profileData.id)
+      const { data: feedbackReceived } = await supabaseClient
+        .from('raid_feedback')
+        .select('went_well')
+        .eq('rated_user_id', profileData.id)
 
-if (feedbackReceived && feedbackReceived.length > 0) {
-  const positive = feedbackReceived.filter((f) => f.went_well).length
-  setRaidReputation({
-    percent: Math.round((positive / feedbackReceived.length) * 100),
-    total: feedbackReceived.length,
-  })
-} else {
-  setRaidReputation(null)
-}
+      if (feedbackReceived && feedbackReceived.length > 0) {
+        const positive = feedbackReceived.filter((f) => f.went_well).length
+        setRaidReputation({
+          percent: Math.round((positive / feedbackReceived.length) * 100),
+          total: feedbackReceived.length,
+        })
+      } else {
+        setRaidReputation(null)
+      }
     }
-    
 
     setLoading(false)
   }
-
-  
 
   useEffect(() => {
     loadData()
@@ -104,14 +104,17 @@ if (feedbackReceived && feedbackReceived.length > 0) {
   async function handleUpdateProfile(e) {
     e.preventDefault()
     const { error } = await supabaseClient
-  .from('profiles')
-  .update({
-    go_friend_code: goCode || null,
-    go_level: goLevel ? parseInt(goLevel) : null,
-    go_trainer_name: goTrainerName || null,
-    show_go_code_publicly: showGoCodePublicly,
-  })
-  .eq('id', user.id)
+      .from('profiles')
+      .update({
+        go_friend_code: goCode || null,
+        go_level: goLevel ? parseInt(goLevel) : null,
+        go_trainer_name: goTrainerName || null,
+        show_go_code_publicly: showGoCodePublicly,
+        avatar_trainer_url: avatarTrainerUrl || null,
+        avatar_pokemon_url: avatarPokemonUrl || null,
+      })
+      .eq('id', user.id)
+
     if (!error) {
       await loadData()
       setEditingProfile(false)
@@ -164,25 +167,47 @@ if (feedbackReceived && feedbackReceived.length > 0) {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-      <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
-      </button>
+          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
+        </button>
         {isOwnProfile && <PokemonGoNav />}
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
-          <h1 className="text-xl font-semibold mb-1">{profile.username}</h1>
+          <div className="flex items-center gap-3 mb-1">
+          {(profile.avatar_trainer_url || profile.avatar_pokemon_url) && (
+            <div className="flex items-end -space-x-2">
+              {profile.avatar_trainer_url && (
+                <img src={profile.avatar_trainer_url} alt="" className="w-14 h-14 object-contain" onError={(e) => e.target.style.display = 'none'} />
+              )}
+              {profile.avatar_pokemon_url && (
+                <img src={profile.avatar_pokemon_url} alt="" className="w-10 h-10 object-contain" onError={(e) => e.target.style.display = 'none'} />
+              )}
+            </div>
+          )}
+          <h1 className="text-xl font-semibold">{profile.username}</h1>
+        </div>
 
           {editingProfile ? (
             <form onSubmit={handleUpdateProfile} className="space-y-3 pt-2">
+              <div>
+                <label className="text-xs text-[#8A8C9C] mb-1 block">Trainer avatar</label>
+                <TrainerAvatarPicker onSelect={setAvatarTrainerUrl} />
+
+                <label className="text-xs text-[#8A8C9C] mb-1 mt-3 block">Pokémon avatar (shown on profile)</label>
+                <PokemonPicker onSelect={(p) => setAvatarPokemonUrl(p.shiny ? p.shinyImageUrl : p.imageUrl)} placeholder="Search for a Pokémon avatar..." />
+
+                {(avatarTrainerUrl || avatarPokemonUrl) && (
+                  <div className="flex items-end gap-2 mt-2">
+                    {avatarTrainerUrl && <img src={avatarTrainerUrl} alt="" className="w-14 h-14 object-contain" />}
+                    {avatarPokemonUrl && <img src={avatarPokemonUrl} alt="" className="w-10 h-10 object-contain" />}
+                  </div>
+                )}
+              </div>
+
               <input
-              value={goTrainerName} onChange={(e) => setGoTrainerName(e.target.value)}
-              placeholder="Your in-game trainer name"
-              className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-            />
-            <input
-              value={goCode} onChange={(e) => setGoCode(e.target.value)}
-              placeholder="Pokémon GO friend code"
-              className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-            />
+                value={goTrainerName} onChange={(e) => setGoTrainerName(e.target.value)}
+                placeholder="Your in-game trainer name"
+                className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+              />
               <input
                 value={goCode} onChange={(e) => setGoCode(e.target.value)}
                 placeholder="Pokémon GO friend code"
@@ -235,18 +260,18 @@ if (feedbackReceived && feedbackReceived.length > 0) {
               <p className="text-sm text-[#C7C9D9]">Trainer level: {profile.go_level || '—'}</p>
               <p className="text-sm text-[#4FA8A0] mt-1">{completedCount} trades completed</p>
               <p className="text-sm text-[#C7C9D9] mt-1">{raidsHostedCount} raids hosted · {raidsJoinedCount} raids joined</p>
-                {raidReputation && (
-              <p className="text-sm text-[#4FA8A0] mt-1">{raidReputation.percent}% positive raid feedback ({raidReputation.total} ratings)</p>
-            )}
+              {raidReputation && (
+                <p className="text-sm text-[#4FA8A0] mt-1">{raidReputation.percent}% positive raid feedback ({raidReputation.total} ratings)</p>
+              )}
               {profile.show_go_code_publicly && profile.go_friend_code && (
-              <p className="text-xs text-[#4FA8A0] mt-2 bg-[#14151F] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
-                GO friend code: <span className="font-mono font-semibold">{profile.go_friend_code}</span>
-              </p>
-            )}
-            {profile.go_trainer_name && (
-              <p className="text-sm text-[#C7C9D9] mt-2">In-game name: {profile.go_trainer_name}</p>
-            )}
-            {isOwnProfile && (
+                <p className="text-xs text-[#4FA8A0] mt-2 bg-[#14151F] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
+                  GO friend code: <span className="font-mono font-semibold">{profile.go_friend_code}</span>
+                </p>
+              )}
+              {profile.go_trainer_name && (
+                <p className="text-sm text-[#C7C9D9] mt-2">In-game name: {profile.go_trainer_name}</p>
+              )}
+              {isOwnProfile && (
                 <button onClick={() => setEditingProfile(true)} className="block text-xs text-[#4FA8A0] hover:text-[#6FC4BC] mt-3">
                   Edit profile
                 </button>

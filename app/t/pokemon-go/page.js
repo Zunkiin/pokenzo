@@ -18,11 +18,6 @@ export default function PokemonGoTestPage() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const [editingProfile, setEditingProfile] = useState(false)
-  const [goCode, setGoCode] = useState('')
-  const [goLevel, setGoLevel] = useState('')
-  const [showGoCodePublicly, setShowGoCodePublicly] = useState(false)
-
   async function loadProfile(userId) {
     const { data: existing } = await supabaseClient
       .from('profiles')
@@ -32,9 +27,6 @@ export default function PokemonGoTestPage() {
 
     if (existing) {
       setProfile(existing)
-      setGoCode(existing.go_friend_code || '')
-      setGoLevel(existing.go_level || '')
-      setShowGoCodePublicly(existing.show_go_code_publicly || false)
       return
     }
 
@@ -110,22 +102,6 @@ export default function PokemonGoTestPage() {
     }
   }
 
-  async function handleUpdateProfile(e) {
-    e.preventDefault()
-    const { error } = await supabaseClient
-      .from('profiles')
-      .update({
-        go_friend_code: goCode || null,
-        go_level: goLevel ? parseInt(goLevel) : null,
-        show_go_code_publicly: showGoCodePublicly,
-      })
-      .eq('id', user.id)
-    if (!error) {
-      await loadProfile(user.id)
-      setEditingProfile(false)
-    }
-  }
-
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
@@ -138,70 +114,52 @@ export default function PokemonGoTestPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/" className="inline-flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-        <ArrowLeft size={16} strokeWidth={2.5} /> Back to TCG
-      </Link>
+          <ArrowLeft size={16} strokeWidth={2.5} /> Back to TCG
+        </Link>
+
         <h1 className="text-xl font-semibold">Pokémon GO Hub (test)</h1>
         <PokemonGoNav />
 
         {user && profile && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {(profile.avatar_trainer_url || profile.avatar_pokemon_url) && (
+                  <div className="flex items-end -space-x-2">
+                    {profile.avatar_trainer_url && (
+                      <img src={profile.avatar_trainer_url} alt="" className="w-12 h-12 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                    )}
+                    {profile.avatar_pokemon_url && (
+                      <img src={profile.avatar_pokemon_url} alt="" className="w-9 h-9 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                    )}
+                  </div>
+                )}
+                <div>
                 <p className="font-medium">{profile.username}</p>
+                <p className="text-xs text-[#8A8C9C]">
+                  GO code: {profile.go_friend_code || '—'} · Level {profile.go_level || '—'}
+                </p>
                 <Link href={`/t/pokemon-go/${profile.username}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
                   View my public profile →
                 </Link>
-                <Link href="/t/pokemon-go/trades" className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
-                  
-                </Link>
-                <Link href="/t/pokemon-go/chats" className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
-                  
-                </Link>
+              </div>
               </div>
               <button onClick={handleLogout} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
                 Log out
               </button>
             </div>
-
-            {editingProfile ? (
-              <form onSubmit={handleUpdateProfile} className="space-y-3 pt-3 border-t border-[#2A2C3D]">
-                <input
-                  value={goCode} onChange={(e) => setGoCode(e.target.value)}
-                  placeholder="Pokémon GO friend code"
-                  className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                />
-                <input
-                  type="number" value={goLevel} onChange={(e) => setGoLevel(e.target.value)}
-                  placeholder="Trainer level"
-                  className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                />
-                <label className="flex items-center gap-2 text-sm text-[#C7C9D9]">
-                  <input
-                    type="checkbox" checked={showGoCodePublicly} onChange={(e) => setShowGoCodePublicly(e.target.checked)}
-                    className="accent-[#E8A33D]"
-                  />
-                  Show my GO code on my public profile
-                </label>
-                <div className="flex gap-2">
-                  <button type="submit" className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
-                    Save
-                  </button>
-                  <button type="button" onClick={() => setEditingProfile(false)} className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="pt-3 border-t border-[#2A2C3D] text-sm">
-                <p className="text-[#C7C9D9]">GO code: {profile.go_friend_code || '—'}</p>
-                <p className="text-[#C7C9D9] mb-3">Trainer level: {profile.go_level || '—'}</p>
-                <button onClick={() => setEditingProfile(true)} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
-                  
-                </button>
-              </div>
-            )}
           </div>
         )}
+
+        
+          href="https://pokemongolive.com/news/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
+        >
+          <p className="text-xs uppercase tracking-[0.15em] text-[#E8A33D] font-semibold mb-1">Latest news</p>
+          <p className="text-sm text-[#EDEAE3]">Check the official Pokémon GO news and events →</p>
+        </a>
 
         {user && !profile && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">

@@ -23,7 +23,7 @@ export default function CommunityPage() {
   async function loadMessages(userId) {
     const { data: msgs } = await supabaseClient
       .from('community_messages')
-      .select('id, user_id, message, image_url, created_at, profiles(username)')
+      .select('id, user_id, message, image_url, created_at, profiles(username, avatar_trainer_url)')
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -53,34 +53,34 @@ export default function CommunityPage() {
         }
 
         const { data: comments } = await supabaseClient
-  .from('message_comments')
-  .select('id, comment, user_id, created_at, profiles(username)')
-  .eq('message_id', m.id)
-  .order('created_at', { ascending: true })
+          .from('message_comments')
+          .select('id, comment, user_id, created_at, profiles(username)')
+          .eq('message_id', m.id)
+          .order('created_at', { ascending: true })
 
-const commentsWithLikes = await Promise.all(
-  (comments || []).map(async (c) => {
-    const { count: cLikeCount } = await supabaseClient
-      .from('comment_likes')
-      .select('id', { count: 'exact', head: true })
-      .eq('comment_id', c.id)
+        const commentsWithLikes = await Promise.all(
+          (comments || []).map(async (c) => {
+            const { count: cLikeCount } = await supabaseClient
+              .from('comment_likes')
+              .select('id', { count: 'exact', head: true })
+              .eq('comment_id', c.id)
 
-    let cLiked = false
-    if (userId) {
-      const { data: myCLike } = await supabaseClient
-        .from('comment_likes')
-        .select('id')
-        .eq('comment_id', c.id)
-        .eq('user_id', userId)
-        .maybeSingle()
-      cLiked = !!myCLike
-    }
+            let cLiked = false
+            if (userId) {
+              const { data: myCLike } = await supabaseClient
+                .from('comment_likes')
+                .select('id')
+                .eq('comment_id', c.id)
+                .eq('user_id', userId)
+                .maybeSingle()
+              cLiked = !!myCLike
+            }
 
-    return { ...c, likeCount: cLikeCount || 0, iLiked: cLiked }
-  })
-)
+            return { ...c, likeCount: cLikeCount || 0, iLiked: cLiked }
+          })
+        )
 
-return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
+        return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
       })
     )
 
@@ -89,18 +89,18 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
 
   useEffect(() => {
     supabaseClient.auth.getUser().then(async ({ data }) => {
-  setUser(data.user)
-  if (data.user) {
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', data.user.id)
-      .maybeSingle()
-    setIsAdmin(profile?.is_admin || false)
-  }
-  await loadMessages(data.user?.id)
-  setLoading(false)
-})
+      setUser(data.user)
+      if (data.user) {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', data.user.id)
+          .maybeSingle()
+        setIsAdmin(profile?.is_admin || false)
+      }
+      await loadMessages(data.user?.id)
+      setLoading(false)
+    })
 
     const channel = supabaseClient
       .channel('community_feed')
@@ -116,63 +116,59 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
         const { data } = await supabaseClient.auth.getUser()
         await loadMessages(data.user?.id)
       })
-
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comment_likes' }, async () => {
         const { data } = await supabaseClient.auth.getUser()
         await loadMessages(data.user?.id)
       })
-
       .subscribe()
-
-      
 
     return () => { supabaseClient.removeChannel(channel) }
   }, [])
 
   async function handleFileUpload(e) {
-  const file = e.target.files[0]
-  if (!file) return
+    const file = e.target.files[0]
+    if (!file) return
 
-  if (file.size > 5 * 1024 * 1024) {
-    setPostError('Image must be under 5 MB.')
-    return
-  }
+    if (file.size > 5 * 1024 * 1024) {
+      setPostError('Image must be under 5 MB.')
+      return
+    }
 
-  setUploading(true)
-  setPostError('')
+    setUploading(true)
+    setPostError('')
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${user.id}-${Date.now()}.${fileExt}`
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${user.id}-${Date.now()}.${fileExt}`
 
-  const { error: uploadError } = await supabaseClient.storage
-    .from('community-images')
-    .upload(fileName, file)
+    const { error: uploadError } = await supabaseClient.storage
+      .from('community-images')
+      .upload(fileName, file)
 
-  if (uploadError) {
-    setPostError('Failed to upload image: ' + uploadError.message)
+    if (uploadError) {
+      setPostError('Failed to upload image: ' + uploadError.message)
+      setUploading(false)
+      return
+    }
+
+    const { data } = supabaseClient.storage.from('community-images').getPublicUrl(fileName)
+
+    const modRes = await fetch('/api/moderate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl: data.publicUrl }),
+    })
+    const modResult = await modRes.json()
+
+    if (!modResult.approved) {
+      await supabaseClient.storage.from('community-images').remove([fileName])
+      setPostError('This image was flagged by our automatic moderation and cannot be posted.')
+      setUploading(false)
+      return
+    }
+
+    setNewImageUrl(data.publicUrl)
     setUploading(false)
-    return
   }
-
-  const { data } = supabaseClient.storage.from('community-images').getPublicUrl(fileName)
-
-  const modRes = await fetch('/api/moderate-image', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageUrl: data.publicUrl }),
-  })
-  const modResult = await modRes.json()
-
-  if (!modResult.approved) {
-    await supabaseClient.storage.from('community-images').remove([fileName])
-    setPostError('This image was flagged by our automatic moderation and cannot be posted.')
-    setUploading(false)
-    return
-  }
-
-  setNewImageUrl(data.publicUrl)
-  setUploading(false)
-}
 
   async function handlePost(e) {
     e.preventDefault()
@@ -184,9 +180,9 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
     }
 
     if (containsLink(newMessage)) {
-    setPostError('Links are not allowed in posts.')
-    return
-  }
+      setPostError('Links are not allowed in posts.')
+      return
+    }
 
     const { error } = await supabaseClient.from('community_messages').insert({
       user_id: user.id,
@@ -238,10 +234,11 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
   async function handlePostComment(messageId) {
     const text = (commentInputs[messageId] || '').trim()
     if (!text) return
+
     if (containsLink(text)) {
-    setPostError('Links are not allowed in comments.')
-    return
-  }
+      setPostError('Links are not allowed in comments.')
+      return
+    }
 
     await supabaseClient.from('message_comments').insert({
       message_id: messageId,
@@ -253,13 +250,13 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
   }
 
   async function handleToggleCommentLike(commentId, currentlyLiked) {
-  if (currentlyLiked) {
-    await supabaseClient.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', user.id)
-  } else {
-    await supabaseClient.from('comment_likes').insert({ comment_id: commentId, user_id: user.id })
+    if (currentlyLiked) {
+      await supabaseClient.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', user.id)
+    } else {
+      await supabaseClient.from('comment_likes').insert({ comment_id: commentId, user_id: user.id })
+    }
+    await loadMessages(user.id)
   }
-  await loadMessages(user.id)
-}
 
   if (loading) {
     return (
@@ -322,7 +319,10 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
           {messages.map((msg) => (
             <div key={msg.id} className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
               <div className="flex items-center justify-between mb-2">
-                <Link href={`/t/pokemon-go/${msg.profiles?.username}`} className="text-xs font-medium text-[#4FA8A0] hover:underline">
+                <Link href={`/t/pokemon-go/${msg.profiles?.username}`} className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline">
+                  {msg.profiles?.avatar_trainer_url && (
+                    <img src={msg.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                  )}
                   {msg.profiles?.username}
                 </Link>
                 <span className="text-[10px] text-[#5C5E70]">
@@ -349,44 +349,44 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
                   💬 {msg.comments.length}
                 </button>
                 {user && (
-                msg.user_id === user.id || isAdmin ? (
+                  msg.user_id === user.id || isAdmin ? (
                     <button onClick={() => handleDelete(msg.id)} className="text-[#C1554A] hover:text-[#E8836F] ml-auto">
-                    Delete{isAdmin && msg.user_id !== user.id ? ' (admin)' : ''}
+                      Delete{isAdmin && msg.user_id !== user.id ? ' (admin)' : ''}
                     </button>
-                ) : (
+                  ) : (
                     <>
-                    <button
+                      <button
                         onClick={() => handleReport(msg.id)}
                         disabled={reportedIds.includes(msg.id)}
                         className="text-[#8A8C9C] hover:text-[#E8A33D] disabled:opacity-50 ml-auto"
-                    >
+                      >
                         {reportedIds.includes(msg.id) ? 'Reported' : 'Report'}
-                    </button>
-                    <button onClick={() => handleBlock(msg.user_id)} className="text-[#8A8C9C] hover:text-[#C1554A]">
+                      </button>
+                      <button onClick={() => handleBlock(msg.user_id)} className="text-[#8A8C9C] hover:text-[#C1554A]">
                         Block
-                    </button>
+                      </button>
                     </>
-                )
+                  )
                 )}
               </div>
 
               {expandedComments[msg.id] && (
                 <div className="border-t border-[#2A2C3D] pt-2 space-y-2">
                   {msg.comments.map((c) => (
-                <div key={c.id} className="flex items-center justify-between text-xs">
-                    <div>
-                    <span className="font-semibold text-[#4FA8A0]">{c.profiles?.username}: </span>
-                    <span className="text-[#C7C9D9]">{c.comment}</span>
+                    <div key={c.id} className="flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-semibold text-[#4FA8A0]">{c.profiles?.username}: </span>
+                        <span className="text-[#C7C9D9]">{c.comment}</span>
+                      </div>
+                      <button
+                        onClick={() => user && handleToggleCommentLike(c.id, c.iLiked)}
+                        disabled={!user}
+                        className={'flex-shrink-0 ml-2 ' + (c.iLiked ? 'text-[#E8A33D]' : 'text-[#5C5E70]')}
+                      >
+                        {c.iLiked ? '❤️' : '🤍'} {c.likeCount}
+                      </button>
                     </div>
-                    <button
-                    onClick={() => user && handleToggleCommentLike(c.id, c.iLiked)}
-                    disabled={!user}
-                    className={'flex-shrink-0 ml-2 ' + (c.iLiked ? 'text-[#E8A33D]' : 'text-[#5C5E70]')}
-                    >
-                    {c.iLiked ? '❤️' : '🤍'} {c.likeCount}
-                    </button>
-                </div>
-                ))}
+                  ))}
                   {user && (
                     <div className="flex gap-2 mt-2">
                       <input
