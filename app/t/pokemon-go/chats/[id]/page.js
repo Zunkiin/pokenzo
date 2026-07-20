@@ -4,6 +4,7 @@ import { supabaseClient } from '@/lib/supabaseClient'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { containsLink } from '@/lib/contentFilters'
+import { ArrowLeft } from 'lucide-react'
 
 
 const AUTO_CLOSE_HOURS = 1
@@ -186,7 +187,7 @@ async function handleSubmitFeedback(wentWell) {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-4 flex flex-col">
       <div className="max-w-md mx-auto w-full flex flex-col flex-1">
         <Link href="/t/pokemon-go/trades" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D] mb-4">
-          ← Back to trades
+          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to trades</span>
         </Link>
 
         <div className="mb-4">

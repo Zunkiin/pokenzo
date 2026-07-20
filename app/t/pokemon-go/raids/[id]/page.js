@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 const CONFIRM_SECONDS = 100
 const RAID_WINDOW_MINUTES = 20
@@ -53,10 +54,10 @@ export default function RaidDetailPage() {
 
     if (raidData) {
       const { data: host } = await supabaseClient
-        .from('profiles')
-        .select('username, go_friend_code')
-        .eq('id', raidData.host_id)
-        .maybeSingle()
+      .from('profiles')
+      .select('username, go_friend_code, go_trainer_name')
+      .eq('id', raidData.host_id)
+      .maybeSingle()
       setHostProfile(host)
 
       const { data: joinRows } = await supabaseClient
@@ -69,10 +70,10 @@ export default function RaidDetailPage() {
         (joinRows || []).map(async (j) => {
           const { data: p } = await supabaseClient
             .from('profiles')
-            .select('username')
+            .select('username, go_trainer_name')
             .eq('id', j.user_id)
             .maybeSingle()
-          return { ...j, username: p?.username || 'Unknown' }
+          return { ...j, username: p?.username || 'Unknown', goTrainerName: p?.go_trainer_name }
         })
       )
       setJoiners(withNames)
@@ -244,7 +245,7 @@ export default function RaidDetailPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/t/pokemon-go/raids" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          ← Back to raids
+          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to raids</span>
         </Link>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
@@ -254,7 +255,7 @@ export default function RaidDetailPage() {
             )}
             <div>
               <p className="text-xs text-[#8A8C9C]">
-                Hosted by {hostProfile?.username}
+                Hosted by {hostProfile?.username}{hostProfile?.go_trainer_name && ` (${hostProfile.go_trainer_name})`}
                 {(isHost || myJoin) && hostProfile?.go_friend_code && (
                   <span className="ml-2 font-mono font-semibold text-[#4FA8A0]">· {hostProfile.go_friend_code}</span>
                 )}
@@ -335,7 +336,10 @@ export default function RaidDetailPage() {
                   return (
                     <div key={j.id} className="flex items-center justify-between text-sm bg-[#14151F] rounded-lg px-3 py-2">
                       <div>
-                        <span className="text-[#C7C9D9]">{j.username}</span>
+                        <span className="text-[#C7C9D9]">
+                          {j.username}
+                          {j.goTrainerName && <span className="text-[#8A8C9C] text-xs"> ({j.goTrainerName})</span>}
+                        </span>
                         <span className={'ml-2 text-xs ' + (j.confirmed ? 'text-[#4FA8A0]' : 'text-[#8A8C9C]')}>
                           {j.confirmed ? '✓ Confirmed' : `${remaining}s left`}
                         </span>

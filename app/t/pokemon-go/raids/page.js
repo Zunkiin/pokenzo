@@ -5,6 +5,7 @@ import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 import { getPokemonList } from '@/lib/pokeapi'
 import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 
 export default function RaidsPage() {
   const router = useRouter()
@@ -18,6 +19,9 @@ export default function RaidsPage() {
   const [bossSearch, setBossSearch] = useState('')
   const [selectedBoss, setSelectedBoss] = useState(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [profile, setProfile] = useState(null)
+  const [needsTrainerName, setNeedsTrainerName] = useState(false)
+  const [trainerNameInput, setTrainerNameInput] = useState('')
 
   async function loadRaids() {
     const { data: raidRows } = await supabaseClient
@@ -41,6 +45,15 @@ export default function RaidsPage() {
   useEffect(() => {
   supabaseClient.auth.getUser().then(async ({ data }) => {
     setUser(data.user)
+    if (data.user) {
+      const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('go_trainer_name')
+        .eq('id', data.user.id)
+        .maybeSingle()
+      setProfile(profileData)
+      setNeedsTrainerName(!profileData?.go_trainer_name)
+    }
     await loadRaids()
     setLoading(false)
   })
@@ -59,6 +72,20 @@ export default function RaidsPage() {
   return () => { supabaseClient.removeChannel(channel) }
 }, [])
 
+async function handleSaveTrainerName(e) {
+  e.preventDefault()
+  if (!trainerNameInput.trim()) return
+
+  const { error } = await supabaseClient
+    .from('profiles')
+    .update({ go_trainer_name: trainerNameInput.trim() })
+    .eq('id', user.id)
+
+  if (!error) {
+    setNeedsTrainerName(false)
+  }
+}
+
   async function handleCreateRaid(e) {
   e.preventDefault()
   setCreateError('')
@@ -67,6 +94,8 @@ export default function RaidsPage() {
     setCreateError('Please select a Pokémon from the list.')
     return
   }
+
+  
 
   const { data: existingRaid } = await supabaseClient
     .from('raids')
@@ -110,13 +139,30 @@ export default function RaidsPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          ← Back
+         <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
         <h1 className="text-xl font-semibold">Raids</h1>
         <PokemonGoNav />
 
-        {user && (
+        {user && needsTrainerName && (
+        <div className="rounded-xl border border-[#E8A33D] bg-[#E8A33D]/10 p-4">
+          <h2 className="text-sm font-semibold mb-2">Set your trainer name first</h2>
+          <p className="text-xs text-[#C7C9D9] mb-3">Other players need to know your in-game name to add you as a friend.</p>
+          <form onSubmit={handleSaveTrainerName} className="space-y-3">
+            <input
+              required value={trainerNameInput} onChange={(e) => setTrainerNameInput(e.target.value)}
+              placeholder="Your in-game trainer name"
+              className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+            />
+            <button type="submit" className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
+              Save and continue
+            </button>
+          </form>
+        </div>
+        )}
+
+        {user && !needsTrainerName && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
             <h2 className="text-sm font-semibold mb-3">Host a raid</h2>
             <form onSubmit={handleCreateRaid} className="space-y-3">

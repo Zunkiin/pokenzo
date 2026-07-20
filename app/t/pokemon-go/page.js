@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
+import { ArrowLeft } from 'lucide-react'
 
 const PENDING_USERNAME_KEY = 'pokenzo_pending_username'
 
@@ -136,6 +137,9 @@ export default function PokemonGoTestPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <ArrowLeft size={16} strokeWidth={2.5} /> Back to TCG
+      </Link>
         <h1 className="text-xl font-semibold">Pokémon GO Hub (test)</h1>
         <PokemonGoNav />
 

@@ -4,6 +4,8 @@ import { supabaseClient } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
+import { ArrowLeft } from 'lucide-react'
+import TrainerAvatarPicker from '@/components/trainer-avatar-picker'
 
 export default function PublicProfilePage() {
   const router = useRouter()
@@ -20,6 +22,7 @@ export default function PublicProfilePage() {
   const [editingProfile, setEditingProfile] = useState(false)
   const [goCode, setGoCode] = useState('')
   const [goLevel, setGoLevel] = useState('')
+  const [goTrainerName, setGoTrainerName] = useState('')
   const [showGoCodePublicly, setShowGoCodePublicly] = useState(false)
 
   const [currentPassword, setCurrentPassword] = useState('')
@@ -40,6 +43,7 @@ export default function PublicProfilePage() {
     if (profileData) {
       setGoCode(profileData.go_friend_code || '')
       setGoLevel(profileData.go_level || '')
+      setGoTrainerName(profileData.go_trainer_name || '')
       setShowGoCodePublicly(profileData.show_go_code_publicly || false)
 
       const { data: offersData } = await supabaseClient
@@ -100,13 +104,14 @@ if (feedbackReceived && feedbackReceived.length > 0) {
   async function handleUpdateProfile(e) {
     e.preventDefault()
     const { error } = await supabaseClient
-      .from('profiles')
-      .update({
-        go_friend_code: goCode || null,
-        go_level: goLevel ? parseInt(goLevel) : null,
-        show_go_code_publicly: showGoCodePublicly,
-      })
-      .eq('id', user.id)
+  .from('profiles')
+  .update({
+    go_friend_code: goCode || null,
+    go_level: goLevel ? parseInt(goLevel) : null,
+    go_trainer_name: goTrainerName || null,
+    show_go_code_publicly: showGoCodePublicly,
+  })
+  .eq('id', user.id)
     if (!error) {
       await loadData()
       setEditingProfile(false)
@@ -158,8 +163,8 @@ if (feedbackReceived && feedbackReceived.length > 0) {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <button onClick={() => router.back()} className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-        ← Back
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+      <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
       </button>
         {isOwnProfile && <PokemonGoNav />}
 
@@ -168,6 +173,16 @@ if (feedbackReceived && feedbackReceived.length > 0) {
 
           {editingProfile ? (
             <form onSubmit={handleUpdateProfile} className="space-y-3 pt-2">
+              <input
+              value={goTrainerName} onChange={(e) => setGoTrainerName(e.target.value)}
+              placeholder="Your in-game trainer name"
+              className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+            />
+            <input
+              value={goCode} onChange={(e) => setGoCode(e.target.value)}
+              placeholder="Pokémon GO friend code"
+              className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+            />
               <input
                 value={goCode} onChange={(e) => setGoCode(e.target.value)}
                 placeholder="Pokémon GO friend code"
@@ -224,11 +239,14 @@ if (feedbackReceived && feedbackReceived.length > 0) {
               <p className="text-sm text-[#4FA8A0] mt-1">{raidReputation.percent}% positive raid feedback ({raidReputation.total} ratings)</p>
             )}
               {profile.show_go_code_publicly && profile.go_friend_code && (
-                <p className="text-xs text-[#4FA8A0] mt-2 bg-[#14151F] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
-                  GO friend code: <span className="font-mono font-semibold">{profile.go_friend_code}</span>
-                </p>
-              )}
-              {isOwnProfile && (
+              <p className="text-xs text-[#4FA8A0] mt-2 bg-[#14151F] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
+                GO friend code: <span className="font-mono font-semibold">{profile.go_friend_code}</span>
+              </p>
+            )}
+            {profile.go_trainer_name && (
+              <p className="text-sm text-[#C7C9D9] mt-2">In-game name: {profile.go_trainer_name}</p>
+            )}
+            {isOwnProfile && (
                 <button onClick={() => setEditingProfile(true)} className="block text-xs text-[#4FA8A0] hover:text-[#6FC4BC] mt-3">
                   Edit profile
                 </button>

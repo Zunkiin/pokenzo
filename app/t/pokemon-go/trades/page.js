@@ -4,6 +4,7 @@ import { supabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 import PokemonPicker from '@/components/pokemon-picker'
+import { ArrowLeft } from 'lucide-react'
 
 export default function TradesPage() {
   const [user, setUser] = useState(null)
@@ -107,7 +108,7 @@ export default function TradesPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          ← Back
+         <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
         <h1 className="text-xl font-semibold">Trade Offers</h1>

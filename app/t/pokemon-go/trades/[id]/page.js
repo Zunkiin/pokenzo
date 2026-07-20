@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 
 export default function TradeDetailPage() {
   const params = useParams()
@@ -111,7 +112,7 @@ export default function TradeDetailPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/t/pokemon-go/trades" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          ← Back to trades
+         <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to trades</span>
         </Link>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 import { containsLink } from '@/lib/contentFilters'
 import CommunityNav from '@/components/community-nav'
+import { ArrowLeft } from 'lucide-react'
 
 export default function CommunityPage() {
   const [user, setUser] = useState(null)
@@ -272,7 +273,7 @@ return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          ← Back
+          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
         <h1 className="text-xl font-semibold">Community Chat</h1>
