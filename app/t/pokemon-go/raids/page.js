@@ -31,14 +31,11 @@ export default function RaidsPage() {
       .order('created_at', { ascending: false })
 
     const withCounts = await Promise.all(
-      (raidRows || []).map(async (raid) => {
-        const { count } = await supabaseClient
-          .from('raid_joins')
-          .select('id', { count: 'exact', head: true })
-          .eq('raid_id', raid.id)
-        return { ...raid, joinCount: count || 0 }
-      })
-    )
+  (raidRows || []).map(async (raid) => {
+    const { data: countData } = await supabaseClient.rpc('count_raid_joins', { target_raid_id: raid.id })
+    return { ...raid, joinCount: countData || 0 }
+  })
+)
     setRaids(withCounts)
   }
 

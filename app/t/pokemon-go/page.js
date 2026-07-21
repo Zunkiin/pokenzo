@@ -30,7 +30,8 @@ export default function PokemonGoTestPage() {
       return
     }
 
-    const pendingUsername = localStorage.getItem(PENDING_USERNAME_KEY)
+    const urlParams = new URLSearchParams(window.location.search)
+    const pendingUsername = urlParams.get('pending_username') || localStorage.getItem(PENDING_USERNAME_KEY)
     if (pendingUsername) {
       const { data: created, error } = await supabaseClient
         .from('profiles')
@@ -73,11 +74,12 @@ export default function PokemonGoTestPage() {
     e.preventDefault()
     setErrorMsg('')
     if (isSignUp) {
-      localStorage.setItem(PENDING_USERNAME_KEY, username)
       const { error } = await supabaseClient.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: window.location.origin + '/t/pokemon-go' }
+        options: {
+          emailRedirectTo: window.location.origin + '/t/pokemon-go?pending_username=' + encodeURIComponent(username)
+        }
       })
       if (error) { setErrorMsg(error.message); return }
       setSent(true)

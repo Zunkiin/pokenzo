@@ -261,7 +261,7 @@ export default function PublicProfilePage() {
               <p className="text-sm text-[#4FA8A0] mt-1">{completedCount} trades completed</p>
               <p className="text-sm text-[#C7C9D9] mt-1">{raidsHostedCount} raids hosted · {raidsJoinedCount} raids joined</p>
               {raidReputation && (
-                <p className="text-sm text-[#4FA8A0] mt-1">{raidReputation.percent}% positive raid feedback ({raidReputation.total} ratings)</p>
+                <p className="text-sm text-[#4FA8A0] mt-1">{raidReputation.percent}% positive overall feedback ({raidReputation.total} ratings)</p>
               )}
               {profile.show_go_code_publicly && profile.go_friend_code && (
                 <p className="text-xs text-[#4FA8A0] mt-2 bg-[#14151F] border border-[#2A2C3D] rounded-lg px-3 py-2 inline-block">
