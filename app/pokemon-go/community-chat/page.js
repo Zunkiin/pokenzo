@@ -319,8 +319,8 @@ export default function CommunityPage() {
                 )}
               </div>
               {postError && <p className="text-xs text-[#C1554A]">{postError}</p>}
-              <button type="submit" className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
-                Post
+              <button type="submit" disabled={uploading} className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F] disabled:opacity-50">
+                {uploading ? 'Please wait, processing image...' : 'Post'}
               </button>
             </form>
           </div>
