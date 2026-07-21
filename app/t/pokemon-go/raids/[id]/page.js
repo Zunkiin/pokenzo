@@ -25,6 +25,7 @@ export default function RaidDetailPage() {
   const [expiredMsg, setExpiredMsg] = useState('')
   const timerRef = useRef(null)
   const [, forceTick] = useState(0)
+  const [joinCount, setJoinCount] = useState(0)
 
   async function loadData() {
     const { data: userData } = await supabaseClient.auth.getUser()
@@ -76,9 +77,12 @@ export default function RaidDetailPage() {
           return { ...j, username: p?.username || 'Unknown', goTrainerName: p?.go_trainer_name }
         })
       )
-      setJoiners(withNames)
+        setJoiners(withNames)
 
-      if (userData.user) {
+        const { data: countData } = await supabaseClient.rpc('count_raid_joins', { target_raid_id: raidData.id })
+        setJoinCount(countData || 0)
+
+        if (userData.user) {
         const mine = withNames.find((j) => j.user_id === userData.user.id)
         setMyJoin(mine || null)
         if (mine && !mine.confirmed) {
@@ -235,7 +239,6 @@ export default function RaidDetailPage() {
   }
 
   const isHost = user && user.id === raid.host_id
-  const joinCount = joiners.length
   const isFull = joinCount >= raid.max_joiners
   const isClosed = raid.status === 'closed'
   const canSeeJoinerList = isHost || myJoin
