@@ -134,28 +134,26 @@ export default function TradesPage() {
               </button>
             </form>
 
-            {myOffers.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-[#2A2C3D] space-y-2">
-                <p className="text-xs text-[#8A8C9C] mb-2">Your active offers</p>
-                {myOffers.map((offer) => (
-                <div key={offer.id} className="flex items-start justify-between text-sm bg-[#14151F] rounded-lg p-3">
-                 <div>
-                <p>Have: <span className="text-[#E8A33D]">{offer.have_pokemon}</span>{offer.have_shiny && ' ✨ Shiny'}</p>
-                <p>Want: <span className="text-[#4FA8A0]">{offer.want_pokemon}</span>{offer.want_shiny && ' ✨ Shiny'}</p>
-                {offer.notes && <p className="text-xs text-[#8A8C9C] mt-1">{offer.notes}</p>}
-            </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-             <Link href={`/t/pokemon-go/trades/${offer.id}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC]">
-                 See chats
-            </Link>
-            <button onClick={() => handleDeleteOffer(offer.id)} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
-                     Delete
-            </button>
-            </div>
-            </div>
-        ))}
+            {myOffers.map((offer) => (
+              <div key={offer.id} className="relative text-sm bg-[#14151F] rounded-lg p-3">
+                <Link
+                  href={`/t/pokemon-go/trades/${offer.id}`}
+                  className="absolute top-2 right-2 text-xs font-medium px-2 py-1 rounded-lg bg-[#2A2C3D] text-[#4FA8A0] hover:bg-[#3A3D57] transition-colors"
+                >
+                  See chats
+                </Link>
+                <div className="pr-20">
+                  <p>Have: <span className="text-[#E8A33D]">{offer.have_pokemon}</span>{offer.have_shiny && ' ✨ Shiny'}</p>
+                  <p>Want: <span className="text-[#4FA8A0]">{offer.want_pokemon}</span>{offer.want_shiny && ' ✨ Shiny'}</p>
+                  {offer.notes && <p className="text-xs text-[#8A8C9C] mt-1">{offer.notes}</p>}
+                </div>
+                <div className="flex justify-end mt-2">
+                  <button onClick={() => handleDeleteOffer(offer.id)} className="text-xs text-[#C1554A] hover:text-[#E8836F]">
+                    Delete
+                  </button>
+                </div>
               </div>
-            )}
+            ))}
           </div>
         )}
 

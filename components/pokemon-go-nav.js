@@ -6,9 +6,9 @@ import { supabaseClient } from '@/lib/supabaseClient'
 
 const tabs = [
   { label: 'Home', href: '/t/pokemon-go' },
-  { label: 'Community Chat', href: '/t/pokemon-go/community-chat' },
-  { label: 'Trade Offers', href: '/t/pokemon-go/trades' },
   { label: 'Raids', href: '/t/pokemon-go/raids' },
+  { label: 'Trade Offers', href: '/t/pokemon-go/trades' },
+  { label: 'Community Chat', href: '/t/pokemon-go/community-chat' },
   { label: 'My Chats', href: '/t/pokemon-go/chats' },
 ]
 
@@ -67,7 +67,7 @@ export default function PokemonGoNav() {
         )
       })}
     </div>
-    <div className="absolute right-0 top-2 bottom-1 w-8 bg-gradient-to-l from-[#14151F] to-transparent pointer-events-none" />
+    <div className="absolute right-0 top-2 bottom-1 w-8 bg-gradient-to-l from-[#14151F] to-transparent pointer-events-none md:hidden" />
   </div>
   )
 }
