@@ -278,7 +278,7 @@ export default function CommunityPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
@@ -289,7 +289,7 @@ export default function CommunityPage() {
         {user && isGuest && (
           <div className="rounded-xl border border-[#E8A33D] bg-[#E8A33D]/10 p-4">
             <p className="text-sm text-[#EDEAE3] mb-1">Community Chat isn't available for guest accounts.</p>
-            <Link href="/t/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
+            <Link href="/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
               Create a full account to unlock this →
             </Link>
           </div>
@@ -328,7 +328,7 @@ export default function CommunityPage() {
 
         {!user && (
           <p className="text-sm text-[#8A8C9C]">
-            <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to post and interact.
+            <Link href="/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to post and interact.
           </p>
         )}
 
@@ -339,7 +339,7 @@ export default function CommunityPage() {
           {messages.map((msg) => (
             <div key={msg.id} className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
               <div className="flex items-center justify-between mb-2">
-                <Link href={`/t/pokemon-go/${msg.profiles?.username}`} className="text-xs font-medium text-[#4FA8A0] hover:underline">
+                <Link href={`/pokemon-go/${msg.profiles?.username}`} className="text-xs font-medium text-[#4FA8A0] hover:underline">
                   {msg.profiles?.username}
                 </Link>
                 <span className="text-[10px] text-[#5C5E70]">

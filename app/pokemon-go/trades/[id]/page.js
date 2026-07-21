@@ -106,7 +106,7 @@ export default function TradeDetailPage() {
     }
 
     if (data) {
-      router.push(`/t/pokemon-go/chats/${data.id}`)
+      router.push(`/pokemon-go/chats/${data.id}`)
     }
   }
 
@@ -131,13 +131,13 @@ export default function TradeDetailPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/t/pokemon-go/trades" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go/trades" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to trades</span>
         </Link>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
           <p className="text-xs text-[#8A8C9C] mb-1">Offered by</p>
-          <Link href={`/t/pokemon-go/${offer.profiles?.username}`} className="font-medium text-[#EDEAE3] hover:text-[#E8A33D]">
+          <Link href={`/pokemon-go/${offer.profiles?.username}`} className="font-medium text-[#EDEAE3] hover:text-[#E8A33D]">
             {offer.profiles?.username}
           </Link>
           {offer.profiles?.go_level && (
@@ -162,12 +162,12 @@ export default function TradeDetailPage() {
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
           {!user ? (
             <p className="text-sm text-[#8A8C9C]">
-              <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to start a chat about this trade.
+              <Link href="/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to start a chat about this trade.
             </p>
           ) : isGuest ? (
             <div>
               <p className="text-sm text-[#8A8C9C] mb-2">Trading isn't available for guest accounts.</p>
-              <Link href="/t/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
+              <Link href="/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
                 Create a full account to unlock trading →
               </Link>
             </div>
@@ -182,7 +182,7 @@ export default function TradeDetailPage() {
                   {relatedChats.map((chat) => (
                     <Link
                       key={chat.id}
-                      href={`/t/pokemon-go/chats/${chat.id}`}
+                      href={`/pokemon-go/chats/${chat.id}`}
                       className="flex items-center justify-between text-sm bg-[#14151F] rounded-lg p-3 hover:bg-[#2A2C3D] transition-colors"
                     >
                       <span>{chat.initiatorUsername}</span>
@@ -193,7 +193,7 @@ export default function TradeDetailPage() {
               )}
             </div>
           ) : existingChatId ? (
-            <Link href={`/t/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
+            <Link href={`/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
               Continue chat
             </Link>
           ) : offer.status === 'completed' ? (

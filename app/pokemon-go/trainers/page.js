@@ -15,7 +15,7 @@ export default async function TrainersPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-4">
-        <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
@@ -30,7 +30,7 @@ export default async function TrainersPage() {
           {trainers?.map((trainer) => (
             <Link
               key={trainer.username}
-              href={`/t/pokemon-go/${trainer.username}`}
+              href={`/pokemon-go/${trainer.username}`}
               className="flex items-center justify-between rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
             >
               <div className="flex items-center gap-2">

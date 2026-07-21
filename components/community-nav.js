@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const tabs = [
-  { label: 'Feed', href: '/t/pokemon-go/community-chat' },
-  { label: 'Trainers', href: '/t/pokemon-go/trainers' },
+  { label: 'Feed', href: '/pokemon-go/community-chat' },
+  { label: 'Trainers', href: '/pokemon-go/trainers' },
 ]
 
 export default function CommunityNav() {

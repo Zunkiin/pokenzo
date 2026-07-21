@@ -247,7 +247,7 @@ export default function RaidDetailPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/t/pokemon-go/raids" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go/raids" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to raids</span>
         </Link>
 
@@ -308,7 +308,7 @@ export default function RaidDetailPage() {
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
             {!user ? (
               <p className="text-sm text-[#8A8C9C]">
-                <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to join this raid.
+                <Link href="/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to join this raid.
               </p>
             ) : isClosed ? (
               <p className="text-sm text-[#8A8C9C]">This raid is no longer accepting joiners.</p>

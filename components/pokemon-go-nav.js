@@ -5,11 +5,11 @@ import { usePathname } from 'next/navigation'
 import { supabaseClient } from '@/lib/supabaseClient'
 
 const tabs = [
-  { label: 'Home', href: '/t/pokemon-go' },
-  { label: 'Raids', href: '/t/pokemon-go/raids' },
-  { label: 'Trade Offers', href: '/t/pokemon-go/trades' },
-  { label: 'Community Chat', href: '/t/pokemon-go/community-chat' },
-  { label: 'My Chats', href: '/t/pokemon-go/chats' },
+  { label: 'Home', href: '/pokemon-go' },
+  { label: 'Raids', href: '/pokemon-go/raids' },
+  { label: 'Trade Offers', href: '/pokemon-go/trades' },
+  { label: 'Community Chat', href: '/pokemon-go/community-chat' },
+  { label: 'My Chats', href: '/pokemon-go/chats' },
 ]
 
 export default function PokemonGoNav() {

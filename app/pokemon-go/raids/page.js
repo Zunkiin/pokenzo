@@ -120,7 +120,7 @@ async function handleSaveTrainerName(e) {
   if (error) {
     setCreateError(error.message)
   } else {
-    router.push(`/t/pokemon-go/raids/${data.id}`)
+    router.push(`/pokemon-go/raids/${data.id}`)
   }
 }
 
@@ -135,7 +135,7 @@ async function handleSaveTrainerName(e) {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
@@ -225,7 +225,7 @@ async function handleSaveTrainerName(e) {
           {raids.map((raid) => (
             <Link
               key={raid.id}
-              href={`/t/pokemon-go/raids/${raid.id}`}
+              href={`/pokemon-go/raids/${raid.id}`}
               className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
             >
               <div className="flex items-center gap-3">

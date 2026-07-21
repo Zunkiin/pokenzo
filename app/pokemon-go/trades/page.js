@@ -112,7 +112,7 @@ export default function TradesPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
@@ -122,7 +122,7 @@ export default function TradesPage() {
         {user && isGuest && (
           <div className="rounded-xl border border-[#E8A33D] bg-[#E8A33D]/10 p-4">
             <p className="text-sm text-[#EDEAE3] mb-1">Trading isn't available for guest accounts.</p>
-            <Link href="/t/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
+            <Link href="/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
               Create a full account to unlock this →
             </Link>
           </div>
@@ -154,7 +154,7 @@ export default function TradesPage() {
                 {myOffers.map((offer) => (
                   <div key={offer.id} className="relative text-sm bg-[#14151F] rounded-lg p-3">
                     <Link
-                      href={`/t/pokemon-go/trades/${offer.id}`}
+                      href={`/pokemon-go/trades/${offer.id}`}
                       className="absolute top-2 right-2 text-xs font-medium px-2 py-1 rounded-lg bg-[#2A2C3D] text-[#4FA8A0] hover:bg-[#3A3D57] transition-colors"
                     >
                       See chats
@@ -184,7 +184,7 @@ export default function TradesPage() {
           {allOffers.map((offer) => (
             <Link
               key={offer.id}
-              href={`/t/pokemon-go/trades/${offer.id}`}
+              href={`/pokemon-go/trades/${offer.id}`}
               className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
             >
               <p className="text-xs text-[#8A8C9C] mb-2">{offer.profiles?.username}</p>

@@ -334,7 +334,7 @@ export default function PublicProfilePage() {
           {offers.map((offer) => (
             <Link
               key={offer.id}
-              href={`/t/pokemon-go/trades/${offer.id}`}
+              href={`/pokemon-go/trades/${offer.id}`}
               className="block text-sm bg-[#14151F] rounded-lg p-3 mb-2 hover:bg-[#2A2C3D] transition-colors"
             >
               <p>Has: <span className="text-[#E8A33D]">{offer.have_pokemon}</span></p>

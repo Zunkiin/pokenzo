@@ -68,7 +68,7 @@ export default function ChatsListPage() {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center px-4">
         <p className="text-sm text-[#8A8C9C]">
-          <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to see your chats.
+          <Link href="/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to see your chats.
         </p>
       </main>
     )
@@ -77,7 +77,7 @@ export default function ChatsListPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-4">
-        <Link href="/t/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
+        <Link href="/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </Link>
 
@@ -92,7 +92,7 @@ export default function ChatsListPage() {
           {chats.map((chat) => (
             <Link
                  key={chat.id}
-                href={`/t/pokemon-go/chats/${chat.id}`}
+                href={`/pokemon-go/chats/${chat.id}`}
                 className="flex items-center justify-between rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors"
            >
             <div>
