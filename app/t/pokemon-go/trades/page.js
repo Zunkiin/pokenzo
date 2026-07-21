@@ -17,6 +17,7 @@ export default function TradesPage() {
   const [wantInput, setWantInput] = useState('')
   const [notesInput, setNotesInput] = useState('')
   const [offerError, setOfferError] = useState('')
+  const [isGuest, setIsGuest] = useState(false)
 
   async function loadAllOffers() {
   const { data } = await supabaseClient
@@ -39,11 +40,15 @@ export default function TradesPage() {
 
   useEffect(() => {
     supabaseClient.auth.getUser().then(async ({ data }) => {
-      setUser(data.user)
-      await loadAllOffers()
-      if (data.user) await loadMyOffers(data.user.id)
-      setLoading(false)
-    })
+  setUser(data.user)
+  await loadAllOffers()
+  if (data.user) {
+    await loadMyOffers(data.user.id)
+    const { data: profileData } = await supabaseClient.from('profiles').select('is_guest').eq('id', data.user.id).maybeSingle()
+    setIsGuest(profileData?.is_guest || false)
+  }
+  setLoading(false)
+})
   }, [])
 
   async function handleAddOffer(e) {
@@ -114,7 +119,13 @@ export default function TradesPage() {
         <h1 className="text-xl font-semibold">Trade Offers</h1>
         <PokemonGoNav />
 
-        {user && (
+        {user && isGuest && (
+          <div className="rounded-xl border border-[#E8A33D] bg-[#E8A33D]/10 p-4">
+            <p className="text-sm text-[#EDEAE3]">Create a full account to unlock trading.</p>
+          </div>
+        )}
+
+        {user && !isGuest && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
             <h2 className="text-sm font-semibold mb-3">Add a trade offer</h2>
             <form onSubmit={handleAddOffer} className="space-y-3">

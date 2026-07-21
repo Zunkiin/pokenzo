@@ -17,6 +17,9 @@ export default function PokemonGoTestPage() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [guestUsername, setGuestUsername] = useState('')
+  const [guestGoCode, setGuestGoCode] = useState('')
+  const [showGuestForm, setShowGuestForm] = useState(false)
 
   async function loadProfile(userId) {
     const { data: existing } = await supabaseClient
@@ -112,6 +115,37 @@ export default function PokemonGoTestPage() {
     )
   }
 
+  async function handleGuestSignIn(e) {
+  e.preventDefault()
+  setErrorMsg('')
+
+  if (!guestUsername.trim()) {
+    setErrorMsg('Please choose a username.')
+    return
+  }
+
+  const { data, error } = await supabaseClient.auth.signInAnonymously()
+
+  if (error) {
+    setErrorMsg(error.message)
+    return
+  }
+
+  const { error: profileError } = await supabaseClient.from('profiles').insert({
+    id: data.user.id,
+    username: guestUsername.trim(),
+    go_friend_code: guestGoCode.trim() || null,
+    is_guest: true,
+  })
+
+  if (profileError) {
+    setErrorMsg(profileError.message.includes('duplicate') ? 'That username is already taken.' : profileError.message)
+    return
+  }
+
+  await loadProfile(data.user.id)
+}
+
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
@@ -195,6 +229,35 @@ export default function PokemonGoTestPage() {
                 className={!isSignUp ? 'text-[#E8A33D] font-semibold' : 'text-[#8A8C9C]'}>
                 Log in
               </button>
+              <div className="mt-4 pt-4 border-t border-[#2A2C3D]">
+      {!showGuestForm ? (
+        <button
+          onClick={() => setShowGuestForm(true)}
+          className="w-full text-xs font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#C7C9D9] hover:bg-[#3A3D57]"
+        >
+          Continue as guest (raids only)
+        </button>
+      ) : (
+        <form onSubmit={handleGuestSignIn} className="space-y-2">
+          <p className="text-xs text-[#8A8C9C] mb-2">
+            No account needed - just enter a name to host or join raids. Note: this can't be recovered if you switch devices or clear your browser.
+          </p>
+          <input
+            required value={guestUsername} onChange={(e) => setGuestUsername(e.target.value)}
+            placeholder="Choose a username"
+            className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+          />
+          <input
+            value={guestGoCode} onChange={(e) => setGuestGoCode(e.target.value)}
+            placeholder="Pokémon GO friend code (optional)"
+            className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+          />
+          <button type="submit" className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
+            Start hosting/joining raids
+          </button>
+        </form>
+      )}
+    </div>
             </div>
 
             {sent ? (
