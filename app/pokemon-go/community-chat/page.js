@@ -313,7 +313,7 @@ export default function CommunityPage() {
                 value={newMessage} onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Write a message here"
                 rows={2}
-                className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D] resize-none"
               />
               <div>
                 <input
