@@ -154,9 +154,14 @@ export default function PokemonGoTestPage() {
         )}
 
         <a href="https://pokemongolive.com/news/" target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors">
-          <p className="text-xs uppercase tracking-[0.15em] text-[#E8A33D] font-semibold mb-1">Latest news</p>
-          <p className="text-sm text-[#EDEAE3]">Check the official Pokémon GO news and events →</p>
-        </a>
+        <p className="text-xs uppercase tracking-[0.15em] text-[#E8A33D] font-semibold mb-1">Latest news</p>
+        <p className="text-sm text-[#EDEAE3]">Check the official Pokémon GO news and events →</p>
+      </a>
+
+      <a href="https://pokemongo.com/en/events" target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors">
+        <p className="text-xs uppercase tracking-[0.15em] text-[#4FA8A0] font-semibold mb-1">Current & upcoming events</p>
+        <p className="text-sm text-[#EDEAE3]">See what's happening in Pokémon GO right now →</p>
+      </a>
 
         {user && !profile && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
