@@ -17,6 +17,7 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true)
   const [reportedIds, setReportedIds] = useState([])
   const [uploading, setUploading] = useState(false)
+  const [imageBlocked, setImageBlocked] = useState(false)
   const [commentInputs, setCommentInputs] = useState({})
   const [expandedComments, setExpandedComments] = useState({})
   const [isAdmin, setIsAdmin] = useState(false)
@@ -24,7 +25,7 @@ export default function CommunityPage() {
   async function loadMessages(userId) {
     const { data: msgs } = await supabaseClient
       .from('community_messages')
-      .select('id, user_id, message, image_url, created_at, profiles(username)')
+      .select('id, user_id, message, image_url, created_at, profiles(username, avatar_trainer_url)')
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -164,16 +165,24 @@ export default function CommunityPage() {
     if (!modResult.approved) {
       await supabaseClient.storage.from('community-images').remove([fileName])
       setPostError('This image was flagged by our automatic moderation and cannot be posted.')
+      setImageBlocked(true)
       setUploading(false)
       return
     }
 
+    setImageBlocked(false)
     setNewImageUrl(data.publicUrl)
     setUploading(false)
   }
 
   async function handlePost(e) {
     e.preventDefault()
+
+    if (imageBlocked) {
+      setPostError('Your image was blocked by moderation. Please remove it or choose a different image before posting.')
+      return
+    }
+
     setPostError('')
 
     if (!newMessage.trim() && !newImageUrl.trim()) {
@@ -197,6 +206,7 @@ export default function CommunityPage() {
     } else {
       setNewMessage('')
       setNewImageUrl('')
+      setImageBlocked(false)
       await loadMessages(user.id)
     }
   }
@@ -339,7 +349,10 @@ export default function CommunityPage() {
           {messages.map((msg) => (
             <div key={msg.id} className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
               <div className="flex items-center justify-between mb-2">
-                <Link href={`/pokemon-go/${msg.profiles?.username}`} className="text-xs font-medium text-[#4FA8A0] hover:underline">
+                <Link href={`/pokemon-go/${msg.profiles?.username}`} className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline">
+                  {msg.profiles?.avatar_trainer_url && (
+                    <img src={msg.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                  )}
                   {msg.profiles?.username}
                 </Link>
                 <span className="text-[10px] text-[#5C5E70]">
