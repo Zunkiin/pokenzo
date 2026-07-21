@@ -2,17 +2,18 @@
 import { useState } from 'react'
 
 const POPULAR_TRAINERS = [
-  'ash', 'misty', 'brock', 'red', 'blue', 'green', 'gold', 'ethan',
+  'ash', 'misty', 'brock', 'red', 'blue', 'green', 'brawly', 'ethan',
   'cynthia', 'lance', 'giovanni', 'archer', 'blaine', 'erika', 'sabrina',
-  'lorelei', 'agatha', 'bruno', 'oak', 'elm', 'birch', 'rowan',
+  'lorelei-gen3', 'ariana', 'bruno', 'oak', 'elm', 'birch', 'rowan',
   'lillie', 'hau', 'gladion', 'guzma', 'lusamine',
   'serena', 'clemont', 'korrina', 'diantha',
   'hilda', 'hilbert', 'cheren', 'bianca', 'n', 'ghetsis',
   'gloria', 'hop', 'bede', 'marnie', 'leon', 'raihan',
-  'nemona', 'arven', 'penny', 'geeta', 'iono',
+  'pokekid', 'acetrainerf-gen4', 'penny', 'geeta', 'iono',
   'brendan', 'may', 'wally', 'steven',
   'lucas', 'dawn', 'barry', 'cyrus',
   'hiker', 'fisherman', 'gentleman', 'beauty', 'backpacker', 'artist', 'blackbelt',
+  'acetrainerf-gen3', 'clair', 'falkner', 'hugh', 'iris', 'lass', 'lady', 'nate', 
 ]
 
 function toDisplayName(slug) {
