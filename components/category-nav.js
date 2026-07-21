@@ -25,7 +25,7 @@ function buildHref(type, language) {
 export default function CategoryNav({ activeType, activeLanguage }) {
   return (
     <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3">
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex flex-wrap gap-2 pb-1">
         {categories.map((cat) => {
           const isActive = activeType === cat.type
           const className = isActive
@@ -40,7 +40,7 @@ export default function CategoryNav({ activeType, activeLanguage }) {
         })}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 mt-2 pt-2 border-t border-[#2A2C3D]">
+      <div className="flex flex-wrap gap-2 pb-1 mt-2 pt-2 border-t border-[#2A2C3D]">
         {languages.map((lang) => {
           const isActive = activeLanguage === lang.value
           const className = isActive
