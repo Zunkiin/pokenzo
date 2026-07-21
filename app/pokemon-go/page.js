@@ -126,7 +126,8 @@ export default function PokemonGoTestPage() {
     })
 
     if (profileError) {
-      setErrorMsg(profileError.message.includes('duplicate') ? 'That username is already taken.' : profileError.message)
+      await supabaseClient.auth.signOut()
+      setErrorMsg(profileError.message.includes('duplicate') ? 'That username is already taken. Please choose a different one.' : profileError.message)
       return
     }
 
@@ -215,6 +216,11 @@ export default function PokemonGoTestPage() {
           <p className="text-sm text-[#EDEAE3]">See what's happening in Pokémon GO right now →</p>
         </a>
 
+        <a href="https://pokemongo.com/en/gofest" target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 hover:border-[#E8A33D] transition-colors">
+          <p className="text-xs uppercase tracking-[0.15em] text-[#E8A33D] font-semibold mb-1">GO Fest</p>
+          <p className="text-sm text-[#EDEAE3]">Check out this year's Pokémon GO Fest →</p>
+        </a>
+
         {user && !profile && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
             <h2 className="text-sm font-semibold mb-1">Complete your profile</h2>
@@ -272,37 +278,6 @@ export default function PokemonGoTestPage() {
                 )}
               </form>
             )}
-
-            <div className="mt-4 pt-4 border-t border-[#2A2C3D]">
-              {!showGuestForm ? (
-                <button
-                  onClick={() => setShowGuestForm(true)}
-                  className="w-full text-xs font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#C7C9D9] hover:bg-[#3A3D57]"
-                >
-                  Continue as guest (raids only)
-                </button>
-              ) : (
-                <form onSubmit={handleGuestSignIn} className="space-y-2">
-                  <p className="text-xs text-[#8A8C9C] mb-2">
-                    No account needed - just enter your in-game trainer name and GO code to host or join raids. Note: this can't be recovered if you switch devices or clear your browser.
-                  </p>
-                  <input
-                    required value={guestUsername} onChange={(e) => setGuestUsername(e.target.value)}
-                    placeholder="Your in-game trainer name"
-                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                  />
-                  <input
-                    required value={guestGoCode} onChange={(e) => setGuestGoCode(e.target.value)}
-                    placeholder="Pokémon GO friend code (required)"
-                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                  />
-                  {errorMsg && <p className="text-xs text-[#C1554A]">{errorMsg}</p>}
-                  <button type="submit" className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
-                    Start hosting/joining raids
-                  </button>
-                </form>
-              )}
-            </div>
           </div>
         )}
       </div>
