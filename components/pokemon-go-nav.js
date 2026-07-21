@@ -48,7 +48,7 @@ export default function PokemonGoNav() {
 
   return (
     <div className="relative mb-6">
-  <div className="flex gap-2 overflow-x-auto pt-2 pb-1 scrollbar-hide">
+  <div className="flex flex-wrap gap-2 pt-2 pb-1">
       {tabs.map((tab) => {
         const isActive = pathname === tab.href
         const className = isActive
@@ -67,7 +67,7 @@ export default function PokemonGoNav() {
         )
       })}
     </div>
-    <div className="absolute right-0 top-2 bottom-1 w-8 bg-gradient-to-l from-[#14151F] to-transparent pointer-events-none md:hidden" />
+    
   </div>
   )
 }
