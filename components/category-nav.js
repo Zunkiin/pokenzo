@@ -60,7 +60,7 @@ export default function CategoryNav({ activeType, activeLanguage }) {
           href="/pokemon-go"
           className="inline-block text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#14151F] text-[#4FA8A0] border border-[#4FA8A0]/50 hover:border-[#4FA8A0] transition-colors"
         >
-          Pokémon GO
+          Pokémon GO Community (Raids and Trades)
         </Link>
       </div>
     </div>
