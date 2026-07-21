@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function CommunityPage() {
   const [user, setUser] = useState(null)
+  const [isGuest, setIsGuest] = useState(false)
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [newImageUrl, setNewImageUrl] = useState('')
@@ -23,7 +24,7 @@ export default function CommunityPage() {
   async function loadMessages(userId) {
     const { data: msgs } = await supabaseClient
       .from('community_messages')
-      .select('id, user_id, message, image_url, created_at, profiles(username, avatar_trainer_url)')
+      .select('id, user_id, message, image_url, created_at, profiles(username)')
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -93,10 +94,11 @@ export default function CommunityPage() {
       if (data.user) {
         const { data: profile } = await supabaseClient
           .from('profiles')
-          .select('is_admin')
+          .select('is_admin, is_guest')
           .eq('id', data.user.id)
           .maybeSingle()
         setIsAdmin(profile?.is_admin || false)
+        setIsGuest(profile?.is_guest || false)
       }
       await loadMessages(data.user?.id)
       setLoading(false)
@@ -218,7 +220,14 @@ export default function CommunityPage() {
   }
 
   async function handleDelete(messageId) {
+    if (!window.confirm('Are you sure you want to delete this post?')) return
     await supabaseClient.from('community_messages').delete().eq('id', messageId)
+    await loadMessages(user?.id)
+  }
+
+  async function handleDeleteComment(commentId) {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return
+    await supabaseClient.from('message_comments').delete().eq('id', commentId)
     await loadMessages(user?.id)
   }
 
@@ -277,7 +286,16 @@ export default function CommunityPage() {
         <PokemonGoNav />
         <CommunityNav />
 
-        {user ? (
+        {user && isGuest && (
+          <div className="rounded-xl border border-[#E8A33D] bg-[#E8A33D]/10 p-4">
+            <p className="text-sm text-[#EDEAE3] mb-1">Community Chat isn't available for guest accounts.</p>
+            <Link href="/t/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
+              Create a full account to unlock this →
+            </Link>
+          </div>
+        )}
+
+        {user && !isGuest && (
           <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
             <h2 className="text-sm font-semibold mb-3">Share your catches and favorites 🎉</h2>
             <form onSubmit={handlePost} className="space-y-3">
@@ -306,7 +324,9 @@ export default function CommunityPage() {
               </button>
             </form>
           </div>
-        ) : (
+        )}
+
+        {!user && (
           <p className="text-sm text-[#8A8C9C]">
             <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to post and interact.
           </p>
@@ -319,10 +339,7 @@ export default function CommunityPage() {
           {messages.map((msg) => (
             <div key={msg.id} className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
               <div className="flex items-center justify-between mb-2">
-                <Link href={`/t/pokemon-go/${msg.profiles?.username}`} className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline">
-                  {msg.profiles?.avatar_trainer_url && (
-                    <img src={msg.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                  )}
+                <Link href={`/t/pokemon-go/${msg.profiles?.username}`} className="text-xs font-medium text-[#4FA8A0] hover:underline">
                   {msg.profiles?.username}
                 </Link>
                 <span className="text-[10px] text-[#5C5E70]">
@@ -378,16 +395,23 @@ export default function CommunityPage() {
                         <span className="font-semibold text-[#4FA8A0]">{c.profiles?.username}: </span>
                         <span className="text-[#C7C9D9]">{c.comment}</span>
                       </div>
-                      <button
-                        onClick={() => user && handleToggleCommentLike(c.id, c.iLiked)}
-                        disabled={!user}
-                        className={'flex-shrink-0 ml-2 ' + (c.iLiked ? 'text-[#E8A33D]' : 'text-[#5C5E70]')}
-                      >
-                        {c.iLiked ? '❤️' : '🤍'} {c.likeCount}
-                      </button>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <button
+                          onClick={() => user && handleToggleCommentLike(c.id, c.iLiked)}
+                          disabled={!user}
+                          className={c.iLiked ? 'text-[#E8A33D]' : 'text-[#5C5E70]'}
+                        >
+                          {c.iLiked ? '❤️' : '🤍'} {c.likeCount}
+                        </button>
+                        {user && (c.user_id === user.id || isAdmin) && (
+                          <button onClick={() => handleDeleteComment(c.id)} className="text-[#C1554A] hover:text-[#E8836F]">
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
-                  {user && (
+                  {user && !isGuest && (
                     <div className="flex gap-2 mt-2">
                       <input
                         value={commentInputs[msg.id] || ''}

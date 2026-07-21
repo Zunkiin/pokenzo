@@ -29,6 +29,9 @@ export default function PublicProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
+  const [upgradeEmail, setUpgradeEmail] = useState('')
+  const [upgradePassword, setUpgradePassword] = useState('')
+  const [upgradeMsg, setUpgradeMsg] = useState('')
 
   async function loadData() {
     const { data: userData } = await supabaseClient.auth.getUser()
@@ -145,6 +148,23 @@ export default function PublicProfilePage() {
     }
   }
 
+  async function handleUpgradeAccount(e) {
+    e.preventDefault()
+    setUpgradeMsg('')
+
+    const { error } = await supabaseClient.auth.updateUser({
+      email: upgradeEmail,
+      password: upgradePassword,
+    })
+
+    if (error) {
+      setUpgradeMsg(error.message)
+    } else {
+      await supabaseClient.from('profiles').update({ is_guest: false }).eq('id', user.id)
+      setUpgradeMsg('Check your email to confirm the change, then refresh this page.')
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
@@ -169,39 +189,42 @@ export default function PublicProfilePage() {
         <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
           <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
         </button>
+
         {isOwnProfile && <PokemonGoNav />}
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
           <div className="flex items-center gap-3 mb-1">
-          {(profile.avatar_trainer_url || profile.avatar_pokemon_url) && (
-            <div className="flex items-end -space-x-2">
-              {profile.avatar_trainer_url && (
-                <img src={profile.avatar_trainer_url} alt="" className="w-14 h-14 object-contain" onError={(e) => e.target.style.display = 'none'} />
-              )}
-              {profile.avatar_pokemon_url && (
-                <img src={profile.avatar_pokemon_url} alt="" className="w-10 h-10 object-contain" onError={(e) => e.target.style.display = 'none'} />
-              )}
-            </div>
-          )}
-          <h1 className="text-xl font-semibold">{profile.username}</h1>
-        </div>
+            {(profile.avatar_trainer_url || profile.avatar_pokemon_url) && (
+              <div className="flex items-end -space-x-2">
+                {profile.avatar_trainer_url && (
+                  <img src={profile.avatar_trainer_url} alt="" className="w-14 h-14 object-contain" />
+                )}
+                {profile.avatar_pokemon_url && (
+                  <img src={profile.avatar_pokemon_url} alt="" className="w-10 h-10 object-contain" />
+                )}
+              </div>
+            )}
+            <h1 className="text-xl font-semibold">{profile.username}</h1>
+          </div>
 
           {editingProfile ? (
             <form onSubmit={handleUpdateProfile} className="space-y-3 pt-2">
               <div>
                 <label className="text-xs text-[#8A8C9C] mb-1 block">Trainer avatar</label>
                 <TrainerAvatarPicker onSelect={setAvatarTrainerUrl} />
-
-                <label className="text-xs text-[#8A8C9C] mb-1 mt-3 block">Pokémon avatar (shown on profile)</label>
-                <PokemonPicker onSelect={(p) => setAvatarPokemonUrl(p.shiny ? p.shinyImageUrl : p.imageUrl)} placeholder="Search for a Pokémon avatar..." />
-
-                {(avatarTrainerUrl || avatarPokemonUrl) && (
-                  <div className="flex items-end gap-2 mt-2">
-                    {avatarTrainerUrl && <img src={avatarTrainerUrl} alt="" className="w-14 h-14 object-contain" />}
-                    {avatarPokemonUrl && <img src={avatarPokemonUrl} alt="" className="w-10 h-10 object-contain" />}
-                  </div>
-                )}
               </div>
+
+              <div>
+                <label className="text-xs text-[#8A8C9C] mb-1 block">Pokémon avatar (shown on profile)</label>
+                <PokemonPicker onSelect={(p) => setAvatarPokemonUrl(p.shiny ? p.shinyImageUrl : p.imageUrl)} placeholder="Search for a Pokémon avatar..." />
+              </div>
+
+              {(avatarTrainerUrl || avatarPokemonUrl) && (
+                <div className="flex items-end gap-2">
+                  {avatarTrainerUrl && <img src={avatarTrainerUrl} alt="" className="w-14 h-14 object-contain" />}
+                  {avatarPokemonUrl && <img src={avatarPokemonUrl} alt="" className="w-10 h-10 object-contain" />}
+                </div>
+              )}
 
               <input
                 value={goTrainerName} onChange={(e) => setGoTrainerName(e.target.value)}
@@ -226,25 +249,48 @@ export default function PublicProfilePage() {
                 Show my GO code on my public profile
               </label>
 
-              <div className="pt-3 border-t border-[#2A2C3D] space-y-2">
-                <p className="text-xs text-[#8A8C9C]">Set or change your password</p>
-                <input
-                  type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Current password (leave blank if none set yet)"
-                  className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                />
-                <div className="flex gap-2">
+              {profile.is_guest && (
+                <div className="pt-3 border-t border-[#2A2C3D] space-y-2">
+                  <p className="text-xs text-[#E8A33D] font-semibold">Upgrade to a full account</p>
+                  <p className="text-xs text-[#8A8C9C]">Keep your raid history and unlock trading, community chat, and more.</p>
                   <input
-                    type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="New password"
-                    className="flex-1 px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                    type="email" required value={upgradeEmail} onChange={(e) => setUpgradeEmail(e.target.value)}
+                    placeholder="Your email"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
                   />
-                  <button type="button" onClick={handleSetPassword} className="text-sm font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
-                    Update
+                  <input
+                    type="password" required value={upgradePassword} onChange={(e) => setUpgradePassword(e.target.value)}
+                    placeholder="Choose a password"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                  />
+                  <button type="button" onClick={handleUpgradeAccount} className="w-full text-sm font-medium px-3 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
+                    Upgrade account
                   </button>
+                  {upgradeMsg && <p className="text-xs text-[#4FA8A0]">{upgradeMsg}</p>}
                 </div>
-                {passwordMsg && <p className="text-xs text-[#4FA8A0]">{passwordMsg}</p>}
-              </div>
+              )}
+
+              {!profile.is_guest && (
+                <div className="pt-3 border-t border-[#2A2C3D] space-y-2">
+                  <p className="text-xs text-[#8A8C9C]">Set or change your password</p>
+                  <input
+                    type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Current password (leave blank if none set yet)"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="New password"
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
+                    />
+                    <button type="button" onClick={handleSetPassword} className="text-sm font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
+                      Update
+                    </button>
+                  </div>
+                  {passwordMsg && <p className="text-xs text-[#4FA8A0]">{passwordMsg}</p>}
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <button type="submit" className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">

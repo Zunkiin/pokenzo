@@ -20,6 +20,7 @@ export default function PokemonGoTestPage() {
   const [showGuestForm, setShowGuestForm] = useState(false)
   const [guestUsername, setGuestUsername] = useState('')
   const [guestGoCode, setGuestGoCode] = useState('')
+  const [isGuest, setIsGuest] = useState(false)
 
   async function loadProfile(userId) {
     const { data: existing } = await supabaseClient
@@ -30,6 +31,7 @@ export default function PokemonGoTestPage() {
 
     if (existing) {
       setProfile(existing)
+      setIsGuest(existing.is_guest || false)
       return
     }
 
@@ -186,6 +188,11 @@ export default function PokemonGoTestPage() {
                   <Link href={`/t/pokemon-go/${profile.username}`} className="text-xs text-[#4FA8A0] hover:text-[#6FC4BC] block mt-1">
                     View my public profile →
                   </Link>
+                  {isGuest && (
+                    <Link href={`/t/pokemon-go/${profile.username}`} className="text-xs font-semibold text-[#E8A33D] hover:underline block mt-1">
+                      Upgrade to a full account →
+                    </Link>
+                  )}
                 </div>
               </div>
               <button onClick={handleLogout} className="text-xs text-[#C1554A] hover:text-[#E8836F]">

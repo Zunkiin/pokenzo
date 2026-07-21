@@ -10,21 +10,33 @@ export default function TradeDetailPage() {
   const router = useRouter()
   const [offer, setOffer] = useState(null)
   const [user, setUser] = useState(null)
+  const [isGuest, setIsGuest] = useState(false)
   const [existingChatId, setExistingChatId] = useState(null)
   const [relatedChats, setRelatedChats] = useState([])
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState('')
+  
 
   useEffect(() => {
     async function load() {
       const { data: userData } = await supabaseClient.auth.getUser()
       setUser(userData.user)
 
+      if (userData.user) {
+        const { data: profileData } = await supabaseClient
+          .from('profiles')
+          .select('is_guest')
+          .eq('id', userData.user.id)
+          .maybeSingle()
+        setIsGuest(profileData?.is_guest || false)
+      }
+
       const { data: offerData } = await supabaseClient
-      .from('trade_offers')
-      .select('id, have_pokemon, have_shiny, want_pokemon, want_shiny, notes, user_id, status, profiles(username, go_level)')
-      .eq('id', params.id)
-      .maybeSingle()
+        .from('trade_offers')
+        .select('id, have_pokemon, have_shiny, want_pokemon, want_shiny, notes, user_id, status, profiles(username, go_level)')
+        .eq('id', params.id)
+        .maybeSingle()
       setOffer(offerData)
 
       if (userData.user && offerData) {
@@ -74,6 +86,8 @@ export default function TradeDetailPage() {
 
   async function handleStartChat() {
     setStarting(true)
+    setStartError('')
+
     const { data, error } = await supabaseClient
       .from('trade_chats')
       .insert({
@@ -85,7 +99,13 @@ export default function TradeDetailPage() {
       .single()
 
     setStarting(false)
-    if (!error && data) {
+
+    if (error) {
+      setStartError('Could not start chat. Guest accounts cannot use trading - create a full account to unlock it.')
+      return
+    }
+
+    if (data) {
       router.push(`/t/pokemon-go/chats/${data.id}`)
     }
   }
@@ -112,7 +132,7 @@ export default function TradeDetailPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <Link href="/t/pokemon-go/trades" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-         <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to trades</span>
+          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to trades</span>
         </Link>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
@@ -123,14 +143,14 @@ export default function TradeDetailPage() {
           {offer.profiles?.go_level && (
             <p className="text-xs text-[#8A8C9C] mt-1">Trainer level: {offer.profiles.go_level}</p>
           )}
-        <div>
+          <div>
             <p className="text-xs text-[#8A8C9C] mb-1">Has</p>
             <p className="text-lg font-semibold text-[#E8A33D]">{offer.have_pokemon}{offer.have_shiny && ' ✨ Shiny'}</p>
-        </div>
-        <div>
+          </div>
+          <div>
             <p className="text-xs text-[#8A8C9C] mb-1">Wants</p>
             <p className="text-lg font-semibold text-[#4FA8A0]">{offer.want_pokemon}{offer.want_shiny && ' ✨ Shiny'}</p>
-      </div>
+          </div>
           {offer.notes && (
             <div>
               <p className="text-xs text-[#8A8C9C] mb-1">Notes</p>
@@ -144,6 +164,13 @@ export default function TradeDetailPage() {
             <p className="text-sm text-[#8A8C9C]">
               <Link href="/t/pokemon-go" className="text-[#E8A33D] hover:underline">Log in</Link> to start a chat about this trade.
             </p>
+          ) : isGuest ? (
+            <div>
+              <p className="text-sm text-[#8A8C9C] mb-2">Trading isn't available for guest accounts.</p>
+              <Link href="/t/pokemon-go" className="text-xs text-[#E8A33D] hover:underline">
+                Create a full account to unlock trading →
+              </Link>
+            </div>
           ) : isOwnOffer ? (
             <div>
               <p className="text-sm text-[#8A8C9C] mb-3">This is your own trade offer.</p>
@@ -166,20 +193,23 @@ export default function TradeDetailPage() {
               )}
             </div>
           ) : existingChatId ? (
-        <Link href={`/t/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
-            Continue chat
-        </Link>
-    ) : offer.status === 'completed' ? (
-        <p className="text-sm text-[#8A8C9C]">This trade has already been completed and is no longer available.</p>
-    ) : (
-        <button
-            onClick={handleStartChat}
-            disabled={starting}
-            className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F] disabled:opacity-50"
-        >
-            {starting ? 'Starting...' : 'Start chat about this trade'}
-        </button>
-        )}
+            <Link href={`/t/pokemon-go/chats/${existingChatId}`} className="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F]">
+              Continue chat
+            </Link>
+          ) : offer.status === 'completed' ? (
+            <p className="text-sm text-[#8A8C9C]">This trade has already been completed and is no longer available.</p>
+          ) : (
+            <>
+              <button
+                onClick={handleStartChat}
+                disabled={starting}
+                className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#E8A33D] text-[#14151F] disabled:opacity-50"
+              >
+                {starting ? 'Starting...' : 'Start chat about this trade'}
+              </button>
+              {startError && <p className="text-xs text-[#C1554A] mt-2">{startError}</p>}
+            </>
+          )}
         </div>
       </div>
     </main>
