@@ -74,9 +74,18 @@ function extractMetaPrice(html) {
   return parsePriceString(contentMatch[1])
 }
 
-function extractWooCommercePrice(html) {
-  const h1Index = html.search(/<h1/i)
-  const searchArea = h1Index !== -1 ? html.slice(h1Index) : html
+function extractWooCommercePrice(html, productName) {
+  let searchArea = html
+
+  if (productName) {
+    const words = productName.toLowerCase().split(' ').filter(w => w.length > 3)
+    const searchPhrase = words.slice(0, 2).join(' ')
+    const lowerHtml = html.toLowerCase()
+    const nameIdx = lowerHtml.indexOf(searchPhrase)
+    if (nameIdx !== -1) {
+      searchArea = html.slice(nameIdx)
+    }
+  }
 
   const regex = /woocommerce-Price-amount amount["'][^>]*>\s*<bdi>\s*([\d.,\s]+)/gi
   let match
@@ -141,7 +150,7 @@ async function main() {
         ? metaAvailability
         : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
 
-      const metaPrice = extractMetaPrice(html) ?? extractWooCommercePrice(html)
+      const metaPrice = extractMetaPrice(html) ?? extractWooCommercePrice(html, productName)
       let newPrice = listing.current_price
       if (metaPrice !== null) {
         newPrice = metaPrice
