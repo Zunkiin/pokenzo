@@ -75,15 +75,16 @@ function extractMetaPrice(html) {
 }
 
 function extractWooCommercePrice(html, productName) {
-  let searchArea = html
+  const bodyIndex = html.search(/<body/i)
+  let searchArea = bodyIndex !== -1 ? html.slice(bodyIndex) : html
 
   if (productName) {
     const words = productName.toLowerCase().split(' ').filter(w => w.length > 3)
     const searchPhrase = words.slice(0, 2).join(' ')
-    const lowerHtml = html.toLowerCase()
-    const nameIdx = lowerHtml.indexOf(searchPhrase)
+    const lowerArea = searchArea.toLowerCase()
+    const nameIdx = lowerArea.indexOf(searchPhrase)
     if (nameIdx !== -1) {
-      searchArea = html.slice(nameIdx)
+      searchArea = searchArea.slice(nameIdx)
     }
   }
 
@@ -150,7 +151,7 @@ async function main() {
         ? metaAvailability
         : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
 
-      const metaPrice = extractMetaPrice(html) ?? extractWooCommercePrice(html, productName)
+      const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
       let newPrice = listing.current_price
       if (metaPrice !== null) {
         newPrice = metaPrice
