@@ -118,3 +118,18 @@ export async function updateProductAction(formData) {
 
   redirect('/admin')
 }
+
+export async function updateListingAction(formData) {
+  const supabase = getSupabaseAdmin()
+
+  await supabase
+    .from('listings')
+    .update({
+      current_price: parseFloat(formData.get('price')),
+      in_stock: formData.get('in_stock') === 'on',
+      last_checked_at: new Date().toISOString(),
+    })
+    .eq('id', formData.get('listing_id'))
+
+  redirect('/admin')
+}
