@@ -127,9 +127,11 @@ export async function updateListingAction(formData) {
     .update({
       current_price: parseFloat(formData.get('price')),
       in_stock: formData.get('in_stock') === 'on',
+      product_url: formData.get('product_url'),
       last_checked_at: new Date().toISOString(),
     })
     .eq('id', formData.get('listing_id'))
 
-  redirect('/admin')
+  const redirectTo = formData.get('redirect_to') || '/admin'
+  redirect(redirectTo)
 }
