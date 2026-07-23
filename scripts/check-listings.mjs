@@ -75,9 +75,12 @@ function extractMetaPrice(html) {
 }
 
 function extractWooCommercePrice(html) {
+  const h1Index = html.search(/<h1/i)
+  const searchArea = h1Index !== -1 ? html.slice(h1Index) : html
+
   const regex = /woocommerce-Price-amount amount["'][^>]*>\s*<bdi>\s*([\d.,\s]+)/gi
   let match
-  while ((match = regex.exec(html)) !== null) {
+  while ((match = regex.exec(searchArea)) !== null) {
     const value = parsePriceString(match[1])
     if (value !== null && value > 0) return value
   }
