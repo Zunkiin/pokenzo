@@ -32,6 +32,9 @@ export default function PublicProfilePage() {
   const [upgradeEmail, setUpgradeEmail] = useState('')
   const [upgradePassword, setUpgradePassword] = useState('')
   const [upgradeMsg, setUpgradeMsg] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   async function loadData() {
     const { data: userData } = await supabaseClient.auth.getUser()
@@ -165,6 +168,49 @@ export default function PublicProfilePage() {
     }
   }
 
+  async function handleDeleteAccount() {
+    setDeleteError('')
+
+    if (!window.confirm('Are you absolutely sure? This will permanently delete your account, trade offers, raid history, and community posts. This cannot be undone.')) {
+      return
+    }
+
+    if (!profile.is_guest) {
+      if (!deletePassword) {
+        setDeleteError('Please enter your password to confirm.')
+        return
+      }
+      const { error: verifyError } = await supabaseClient.auth.signInWithPassword({
+        email: user.email,
+        password: deletePassword,
+      })
+      if (verifyError) {
+        setDeleteError('Incorrect password.')
+        return
+      }
+    }
+
+    setDeleting(true)
+
+    const { data: sessionData } = await supabaseClient.auth.getSession()
+    const token = sessionData.session?.access_token
+
+    const res = await fetch('/api/delete-account', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const result = await res.json()
+
+    if (result.success) {
+      await supabaseClient.auth.signOut()
+      router.push('/')
+    } else {
+      setDeleteError(result.error || 'Something went wrong. Please try again.')
+      setDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
@@ -239,6 +285,7 @@ export default function PublicProfilePage() {
               <input
                 type="number" value={goLevel} onChange={(e) => setGoLevel(e.target.value)}
                 placeholder="Trainer level"
+                min="1" max="80"
                 className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
               />
               <label className="flex items-center gap-2 text-sm text-[#C7C9D9]">
@@ -298,6 +345,27 @@ export default function PublicProfilePage() {
                 </button>
                 <button type="button" onClick={() => setEditingProfile(false)} className="flex-1 text-sm font-medium px-3 py-2 rounded-lg bg-[#2A2C3D] text-[#EDEAE3]">
                   Cancel
+                </button>
+              </div>
+
+              <div className="pt-3 border-t border-[#C1554A]/30 space-y-2">
+                <p className="text-xs text-[#C1554A] font-semibold">Danger zone</p>
+                <p className="text-xs text-[#8A8C9C]">
+                  Deleting your account permanently removes your profile, trade offers, raid history, and community posts. This cannot be undone.
+                </p>
+                {!profile.is_guest && (
+                  <input
+                    type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Enter your password to confirm"
+                    className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#C1554A]"
+                  />
+                )}
+                {deleteError && <p className="text-xs text-[#C1554A]">{deleteError}</p>}
+                <button
+                  type="button" onClick={handleDeleteAccount} disabled={deleting}
+                  className="w-full text-sm font-medium px-3 py-2 rounded-lg bg-[#C1554A] text-[#14151F] disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Delete my account'}
                 </button>
               </div>
             </form>

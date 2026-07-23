@@ -49,6 +49,7 @@ export default function PrivacyPolicyPage() {
             <li><strong>Resend</strong> - transactional emails</li>
             <li><strong>Sightengine</strong> - automated moderation of uploaded images</li>
             <li><strong>PokeAPI / Pokémon Showdown</strong> - Pokémon and trainer sprite images</li>
+            <li><strong>Discord</strong> - our community server is hosted on Discord. If you join, your activity there is governed by Discord's own privacy policy and terms, not Pokenzo's.</li>
           </ul>
         </section>
 
@@ -62,8 +63,8 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-lg font-semibold mb-2 text-[#E8A33D]">6. Your Rights</h2>
           <p className="text-[#C7C9D9]">
-            You can view, edit, or delete your profile information at any time from your account settings. To request full deletion of your account and associated data, contact us using the details below.
-          </p>
+            You can view and edit your profile information at any time from your account settings. You can permanently delete your account and all associated data (trade offers, raid history, community posts) directly from your profile page under "Edit profile" → "Danger zone". This action is immediate and cannot be undone.
+         </p>
         </section>
 
         <section>
