@@ -14,6 +14,7 @@ export default function SinglePostPage() {
   const [comments, setComments] = useState([])
   const [commentInput, setCommentInput] = useState('')
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   async function loadPost() {
     const { data: userData } = await supabaseClient.auth.getUser()
@@ -21,7 +22,7 @@ export default function SinglePostPage() {
 
     const { data: msg } = await supabaseClient
       .from('community_messages')
-      .select('id, user_id, message, image_url, created_at, hidden, profiles(username)')
+      .select('id, user_id, message, image_url, created_at, hidden, profiles(username, avatar_trainer_url)')
       .eq('id', params.id)
       .maybeSingle()
 
@@ -84,6 +85,13 @@ export default function SinglePostPage() {
     await loadPost()
   }
 
+  function handleShare() {
+    const url = window.location.href
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
@@ -109,7 +117,10 @@ export default function SinglePostPage() {
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
           <div className="flex items-center justify-between mb-2">
-            <Link href={`/pokemon-go/${message.profiles?.username}`} className="text-xs font-medium text-[#4FA8A0] hover:underline">
+            <Link href={`/pokemon-go/${message.profiles?.username}`} className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline">
+              {message.profiles?.avatar_trainer_url && (
+                <img src={message.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+              )}
               {message.profiles?.username}
             </Link>
             <span className="text-[10px] text-[#5C5E70]">
@@ -120,13 +131,18 @@ export default function SinglePostPage() {
           {message.image_url && (
             <img src={message.image_url} alt="" className="w-full rounded-lg mb-2" onError={(e) => e.target.style.display = 'none'} />
           )}
-          <button
-            onClick={handleToggleLike}
-            disabled={!user}
-            className={'text-xs ' + (iLiked ? 'text-[#E8A33D] font-semibold' : 'text-[#8A8C9C]')}
-          >
-            {iLiked ? '❤️' : '🤍'} {likeCount}
-          </button>
+          <div className="flex items-center gap-4 text-xs">
+            <button
+              onClick={handleToggleLike}
+              disabled={!user}
+              className={iLiked ? 'text-[#E8A33D] font-semibold' : 'text-[#8A8C9C]'}
+            >
+              {iLiked ? '❤️' : '🤍'} {likeCount}
+            </button>
+            <button onClick={handleShare} className="text-[#8A8C9C] hover:text-[#4FA8A0]">
+              {copied ? '✓ Copied' : '🔗 Share'}
+            </button>
+          </div>
         </div>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
