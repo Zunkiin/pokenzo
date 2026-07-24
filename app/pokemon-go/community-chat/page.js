@@ -28,7 +28,7 @@ export default function CommunityPage() {
   async function loadMessages(userId) {
     const { data: msgs } = await supabaseClient
       .from('community_messages')
-      .select('id, user_id, message, image_url, created_at, profiles(username, avatar_trainer_url)')
+      .select('id, user_id, message, image_url, created_at, profiles(username, avatar_trainer_url, avatar_pokemon_url)')
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -368,8 +368,15 @@ export default function CommunityPage() {
                     onClick={(e) => e.stopPropagation()}
                     className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline"
                   >
-                    {msg.profiles?.avatar_trainer_url && (
-                      <img src={msg.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                    {(msg.profiles?.avatar_trainer_url || msg.profiles?.avatar_pokemon_url) && (
+                      <div className="flex items-center -space-x-1">
+                        {msg.profiles?.avatar_trainer_url && (
+                          <img src={msg.profiles.avatar_trainer_url} alt="" className="w-8 h-8 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                        )}
+                        {msg.profiles?.avatar_pokemon_url && (
+                          <img src={msg.profiles.avatar_pokemon_url} alt="" className="w-6 h-6 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                        )}
+                      </div>
                     )}
                     {msg.profiles?.username}
                   </Link>
