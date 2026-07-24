@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 import { containsLink } from '@/lib/contentFilters'
 import CommunityNav from '@/components/community-nav'
 import { ArrowLeft } from 'lucide-react'
 
 export default function CommunityPage() {
+  const router = useRouter()
   const [user, setUser] = useState(null)
   const [isGuest, setIsGuest] = useState(false)
   const [messages, setMessages] = useState([])
@@ -55,13 +57,6 @@ export default function CommunityPage() {
           iLiked = !!myLike
         }
 
-        function handleShare(messageId) {
-          const url = `${window.location.origin}/pokemon-go/community-chat/${messageId}`
-          navigator.clipboard.writeText(url)
-          setCopiedId(messageId)
-          setTimeout(() => setCopiedId(null), 2000)
-        }
-
         const { data: comments } = await supabaseClient
           .from('message_comments')
           .select('id, comment, user_id, created_at, profiles(username)')
@@ -95,8 +90,6 @@ export default function CommunityPage() {
     )
 
     setMessages(withExtras)
-
-  
   }
 
   useEffect(() => {
@@ -287,6 +280,13 @@ export default function CommunityPage() {
     await loadMessages(user.id)
   }
 
+  function handleShare(messageId) {
+    const url = `${window.location.origin}/pokemon-go/community-chat/${messageId}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(messageId)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
@@ -358,21 +358,30 @@ export default function CommunityPage() {
           )}
           {messages.map((msg) => (
             <div key={msg.id} className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
-              <div className="flex items-center justify-between mb-2">
-                <Link href={`/pokemon-go/${msg.profiles?.username}`} className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline">
-                  {msg.profiles?.avatar_trainer_url && (
-                    <img src={msg.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                  )}
-                  {msg.profiles?.username}
-                </Link>
-                <span className="text-[10px] text-[#5C5E70]">
-                  {new Date(msg.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </span>
+              <div
+                onClick={() => router.push(`/pokemon-go/community-chat/${msg.id}`)}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <Link
+                    href={`/pokemon-go/${msg.profiles?.username}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline"
+                  >
+                    {msg.profiles?.avatar_trainer_url && (
+                      <img src={msg.profiles.avatar_trainer_url} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                    )}
+                    {msg.profiles?.username}
+                  </Link>
+                  <span className="text-[10px] text-[#5C5E70]">
+                    {new Date(msg.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                {msg.message && <p className="text-sm text-[#EDEAE3] mb-2">{msg.message}</p>}
+                {msg.image_url && (
+                  <img src={msg.image_url} alt="" className="w-full rounded-lg mb-2" onError={(e) => e.target.style.display = 'none'} />
+                )}
               </div>
-              {msg.message && <p className="text-sm text-[#EDEAE3] mb-2">{msg.message}</p>}
-              {msg.image_url && (
-                <img src={msg.image_url} alt="" className="w-full rounded-lg mb-2" onError={(e) => e.target.style.display = 'none'} />
-              )}
 
               <div className="flex items-center gap-4 text-xs mb-2">
                 <button
