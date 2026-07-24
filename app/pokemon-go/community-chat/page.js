@@ -21,6 +21,7 @@ export default function CommunityPage() {
   const [commentInputs, setCommentInputs] = useState({})
   const [expandedComments, setExpandedComments] = useState({})
   const [isAdmin, setIsAdmin] = useState(false)
+  const [copiedId, setCopiedId] = useState(null)
 
   async function loadMessages(userId) {
     const { data: msgs } = await supabaseClient
@@ -52,6 +53,13 @@ export default function CommunityPage() {
             .eq('user_id', userId)
             .maybeSingle()
           iLiked = !!myLike
+        }
+
+        function handleShare(messageId) {
+          const url = `${window.location.origin}/pokemon-go/community-chat/${messageId}`
+          navigator.clipboard.writeText(url)
+          setCopiedId(messageId)
+          setTimeout(() => setCopiedId(null), 2000)
         }
 
         const { data: comments } = await supabaseClient
@@ -87,6 +95,8 @@ export default function CommunityPage() {
     )
 
     setMessages(withExtras)
+
+  
   }
 
   useEffect(() => {
@@ -377,6 +387,9 @@ export default function CommunityPage() {
                   className="text-[#8A8C9C]"
                 >
                   💬 {msg.comments.length}
+                </button>
+                <button onClick={() => handleShare(msg.id)} className="text-[#8A8C9C] hover:text-[#4FA8A0]">
+                  {copiedId === msg.id ? '✓ Copied' : '🔗 Share'}
                 </button>
                 {user && (
                   msg.user_id === user.id || isAdmin ? (
