@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 const ORDER_STORAGE_KEY = 'pokenzo_product_order'
 const RETURNING_FLAG_KEY = 'pokenzo_returning'
+const VISIBLE_COUNT_KEY = 'pokenzo_visible_count'
 
 function shuffleArray(arr) {
   const copy = [...arr]
@@ -34,6 +35,14 @@ export default function ProductList({ products }) {
   const [visibleCount, setVisibleCount] = useState(12)
 
   useEffect(() => {
+    const isReturning = sessionStorage.getItem(RETURNING_FLAG_KEY) === 'true'
+    if (isReturning) {
+      const storedCount = sessionStorage.getItem(VISIBLE_COUNT_KEY)
+      if (storedCount) setVisibleCount(Number(storedCount))
+    }
+  }, [])
+
+  useEffect(() => {
   const isReturning = sessionStorage.getItem(RETURNING_FLAG_KEY) === 'true'
   const stored = sessionStorage.getItem(ORDER_STORAGE_KEY)
 
@@ -58,6 +67,7 @@ export default function ProductList({ products }) {
 
 function handleProductClick() {
   sessionStorage.setItem(RETURNING_FLAG_KEY, 'true')
+  sessionStorage.setItem(VISIBLE_COUNT_KEY, String(visibleCount))
 }
 
   function handleSortChange(e) {
