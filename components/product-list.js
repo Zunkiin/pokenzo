@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+const ORDER_STORAGE_KEY = 'pokenzo_product_order'
+
 function shuffleArray(arr) {
   const copy = [...arr]
   for (let i = copy.length - 1; i > 0; i--) {
@@ -11,20 +13,48 @@ function shuffleArray(arr) {
   return copy
 }
 
+function relevanceScore(name, query) {
+  const lowerName = name.toLowerCase()
+  const lowerQuery = query.toLowerCase()
+  if (lowerName === lowerQuery) return 0
+  if (lowerName.startsWith(lowerQuery)) return 1
+  const wordBoundaryIndex = lowerName.indexOf(' ' + lowerQuery)
+  if (wordBoundaryIndex !== -1) return 2
+  return 3
+}
+
 export default function ProductList({ products }) {
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState('random')
   const [randomOrder, setRandomOrder] = useState(products)
+  const [visibleCount, setVisibleCount] = useState(12)
 
   useEffect(() => {
-  setRandomOrder(shuffleArray(products))
-}, [products])
+    const stored = sessionStorage.getItem(ORDER_STORAGE_KEY)
+    if (stored) {
+      try {
+        const storedIds = JSON.parse(stored)
+        const productMap = new Map(products.map((p) => [p.id, p]))
+        const restoredOrder = storedIds.map((id) => productMap.get(id)).filter(Boolean)
+        const missingProducts = products.filter((p) => !storedIds.includes(p.id))
+        setRandomOrder([...restoredOrder, ...missingProducts])
+        return
+      } catch {
+        // fall through to fresh shuffle
+      }
+    }
+    const fresh = shuffleArray(products)
+    setRandomOrder(fresh)
+    sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(fresh.map((p) => p.id)))
+  }, [products])
 
   function handleSortChange(e) {
     const value = e.target.value
     setSortBy(value)
     if (value === 'random') {
-      setRandomOrder(shuffleArray(products))
+      const fresh = shuffleArray(products)
+      setRandomOrder(fresh)
+      sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(fresh.map((p) => p.id)))
     }
   }
 
@@ -38,11 +68,15 @@ export default function ProductList({ products }) {
     sorted = [...filtered].sort((a, b) => (a.cheapestPriceNOK ?? Infinity) - (b.cheapestPriceNOK ?? Infinity))
   } else if (sortBy === 'price_desc') {
     sorted = [...filtered].sort((a, b) => (b.cheapestPriceNOK ?? -Infinity) - (a.cheapestPriceNOK ?? -Infinity))
+  } else if (sortBy === 'relevance') {
+    sorted = [...filtered].sort((a, b) => relevanceScore(a.name, query) - relevanceScore(b.name, query))
   }
+
+  const visible = visibleCount === -1 ? sorted : sorted.slice(0, visibleCount)
 
   return (
     <div>
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
           type="text"
           value={query}
@@ -56,18 +90,28 @@ export default function ProductList({ products }) {
           className="px-3 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-sm focus:outline-none focus:border-[#E8A33D]"
         >
           <option value="random">Random</option>
-          <option value="clicked">Most clicked</option>
+          <option value="relevance">Relevance</option>
+          <option value="clicked">Most Popular</option>
           <option value="price_asc">Price: Low to High</option>
           <option value="price_desc">Price: High to Low</option>
+        </select>
+        <select
+          value={visibleCount}
+          onChange={(e) => setVisibleCount(Number(e.target.value))}
+          className="px-3 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-sm focus:outline-none focus:border-[#E8A33D]"
+        >
+          <option value={12}>Show 12</option>
+          <option value={24}>Show 24</option>
+          <option value={48}>Show 48</option>
+          <option value={-1}>Show all</option>
         </select>
       </div>
 
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
-        {sorted.length === 0 && (
+        {visible.length === 0 && (
           <p className="text-sm text-[#8A8C9C]">No products found.</p>
         )}
-
-        {sorted.map((product) => (
+        {visible.map((product) => (
           <Link
             key={product.id}
             href={'/product/' + product.slug}
@@ -94,6 +138,15 @@ export default function ProductList({ products }) {
           </Link>
         ))}
       </div>
+
+      {visibleCount !== -1 && sorted.length > visibleCount && (
+        <button
+          onClick={() => setVisibleCount(visibleCount + 12)}
+          className="w-full mt-4 text-sm font-medium px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#C7C9D9] hover:border-[#E8A33D] transition-colors"
+        >
+          Show more
+        </button>
+      )}
     </div>
   )
 }
