@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 const ORDER_STORAGE_KEY = 'pokenzo_product_order'
+const RETURNING_FLAG_KEY = 'pokenzo_returning'
 
 function shuffleArray(arr) {
   const copy = [...arr]
@@ -33,23 +34,31 @@ export default function ProductList({ products }) {
   const [visibleCount, setVisibleCount] = useState(12)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(ORDER_STORAGE_KEY)
-    if (stored) {
-      try {
-        const storedIds = JSON.parse(stored)
-        const productMap = new Map(products.map((p) => [p.id, p]))
-        const restoredOrder = storedIds.map((id) => productMap.get(id)).filter(Boolean)
-        const missingProducts = products.filter((p) => !storedIds.includes(p.id))
-        setRandomOrder([...restoredOrder, ...missingProducts])
-        return
-      } catch {
-        // fall through to fresh shuffle
-      }
+  const isReturning = sessionStorage.getItem(RETURNING_FLAG_KEY) === 'true'
+  const stored = sessionStorage.getItem(ORDER_STORAGE_KEY)
+
+  if (isReturning && stored) {
+    sessionStorage.removeItem(RETURNING_FLAG_KEY)
+    try {
+      const storedIds = JSON.parse(stored)
+      const productMap = new Map(products.map((p) => [p.id, p]))
+      const restoredOrder = storedIds.map((id) => productMap.get(id)).filter(Boolean)
+      const missingProducts = products.filter((p) => !storedIds.includes(p.id))
+      setRandomOrder([...restoredOrder, ...missingProducts])
+      return
+    } catch {
+      // fall through to fresh shuffle
     }
-    const fresh = shuffleArray(products)
-    setRandomOrder(fresh)
-    sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(fresh.map((p) => p.id)))
-  }, [products])
+  }
+
+  const fresh = shuffleArray(products)
+  setRandomOrder(fresh)
+  sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(fresh.map((p) => p.id)))
+}, [products])
+
+function handleProductClick() {
+  sessionStorage.setItem(RETURNING_FLAG_KEY, 'true')
+}
 
   function handleSortChange(e) {
     const value = e.target.value
@@ -123,6 +132,7 @@ export default function ProductList({ products }) {
           <Link
             key={product.id}
             href={'/product/' + product.slug}
+            onClick={handleProductClick}
             className="flex items-center gap-3 rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3"
           >
             {product.image_url && (
