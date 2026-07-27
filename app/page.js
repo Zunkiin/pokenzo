@@ -17,6 +17,7 @@ function mapProduct(product) {
     id: product.id,
     slug: product.slug,
     name: product.name,
+    description: product.description || '',
     product_type: product.product_type,
     language: product.language,
     image_url: product.image_url,
@@ -37,7 +38,7 @@ export default async function HomePage({ searchParams }) {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, slug, name, product_type, language, image_url, click_count, listings(current_price, currency, in_stock)')
+    .select('id, slug, name, description, product_type, language, image_url, click_count, listings(current_price, currency, in_stock)')
 
   const allProducts = (products || []).map(mapProduct)
   let filteredProducts = allProducts

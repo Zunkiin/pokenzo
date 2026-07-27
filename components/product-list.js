@@ -13,14 +13,17 @@ function shuffleArray(arr) {
   return copy
 }
 
-function relevanceScore(name, query) {
-  const lowerName = name.toLowerCase()
+function relevanceScore(product, query) {
+  const lowerName = product.name.toLowerCase()
+  const lowerDesc = (product.description || '').toLowerCase()
   const lowerQuery = query.toLowerCase()
+
   if (lowerName === lowerQuery) return 0
   if (lowerName.startsWith(lowerQuery)) return 1
-  const wordBoundaryIndex = lowerName.indexOf(' ' + lowerQuery)
-  if (wordBoundaryIndex !== -1) return 2
-  return 3
+  if (lowerName.includes(' ' + lowerQuery)) return 2
+  if (lowerName.includes(lowerQuery)) return 3
+  if (lowerDesc.includes(lowerQuery)) return 4
+  return 5
 }
 
 export default function ProductList({ products }) {
@@ -59,7 +62,12 @@ export default function ProductList({ products }) {
   }
 
   const base = sortBy === 'random' ? randomOrder : products
-  const filtered = base.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+  const filtered = base.filter((p) => {
+  const lowerQuery = query.toLowerCase()
+  const nameMatch = p.name.toLowerCase().includes(lowerQuery)
+  const descMatch = (p.description || '').toLowerCase().includes(lowerQuery)
+  return nameMatch || descMatch
+})
 
   let sorted = filtered
   if (sortBy === 'clicked') {
@@ -69,7 +77,7 @@ export default function ProductList({ products }) {
   } else if (sortBy === 'price_desc') {
     sorted = [...filtered].sort((a, b) => (b.cheapestPriceNOK ?? -Infinity) - (a.cheapestPriceNOK ?? -Infinity))
   } else if (sortBy === 'relevance') {
-    sorted = [...filtered].sort((a, b) => relevanceScore(a.name, query) - relevanceScore(b.name, query))
+    sorted = [...filtered].sort((a, b) => relevanceScore(a, query) - relevanceScore(b, query))
   }
 
   const visible = visibleCount === -1 ? sorted : sorted.slice(0, visibleCount)
