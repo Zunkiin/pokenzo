@@ -124,7 +124,7 @@ async function sendDiscordAlert(message) {
 async function main() {
   const { data: listings, error } = await supabase
   .from('listings')
-  .select('id, product_url, currency, current_price, in_stock, products(name, slug), stores(name)')
+  .select('id, product_url, currency, current_price, in_stock, products(name, slug), stores(name, country)')
 
   if (error) {
     console.error('Failed to fetch listings:', error.message)
@@ -141,6 +141,8 @@ async function main() {
       const html = await res.text()
       const productName = listing.products?.name ?? 'Ukjent produkt'
       const storeName = listing.stores?.name ?? 'Ukjent butikk'
+      const countryFlag = getCountryFlag(listing.stores?.country)
+      const storeLabel = countryFlag ? `${countryFlag} ${storeName}` : storeName
 
       const fullText = stripHtml(html).toLowerCase()
       const relevantText = getRelevantSection(fullText, productName)
@@ -169,6 +171,11 @@ async function main() {
         }
       }
 
+      function getCountryFlag(country) {
+      const flags = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
+      return flags[country] || ''
+    }
+
       console.log(`[${storeName}] ${productName}: ${newInStock ? 'IN STOCK' : 'out of stock'} - ${newPrice} ${listing.currency}`)
 
       await supabase.from('price_history').insert({
@@ -180,13 +187,15 @@ async function main() {
       const pokenzoUrl = `https://www.pokenzo.com/product/${listing.products?.slug}`
 
       if (!listing.in_stock && newInStock) {
-        await sendDiscordAlert(`🟢 **${productName}** (${storeName}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
+        await sendDiscordAlert(`🟢 **${productName}** (${storeLabel}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
       }
+
       if (listing.in_stock && !newInStock) {
-        await sendDiscordAlert(`🔴 **${productName}** (${storeName}) is now out of stock.\n${pokenzoUrl}`)
+        await sendDiscordAlert(`🔴 **${productName}** (${storeLabel}) is now out of stock.\n${pokenzoUrl}`)
       }
+
       if (listing.current_price && newPrice < listing.current_price) {
-        await sendDiscordAlert(`💰 Price drop on **${productName}** (${storeName}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
+        await sendDiscordAlert(`💰 Price drop on **${productName}** (${storeLabel}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
       }
 
       await supabase
