@@ -54,8 +54,6 @@ function getAllCountryPrices(product) {
   const countries = ['NO', 'SE', 'DK']
   const flags = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
 
-  console.log('DEBUG listings for', product.name, product.listings)
-  
   return countries.map((c) => {
     const relevant = inStock.filter((l) => l.stores?.country === c || l.stores?.ships_to?.includes(c))
     if (relevant.length === 0) return null
@@ -63,7 +61,9 @@ function getAllCountryPrices(product) {
     let cheapest = null
     for (const listing of relevant) {
       const nokPrice = toNOK(listing.current_price, listing.currency)
-      if (cheapest === null || nokPrice < cheapest.nokPrice) cheapest = { price: listing.current_price, currency: listing.currency }
+      if (cheapest === null || nokPrice < cheapest.nokPrice) {
+        cheapest = { nokPrice, price: listing.current_price, currency: listing.currency }
+      }
     }
     const converted = convertCurrency(cheapest.price, cheapest.currency, COUNTRY_CURRENCY[c])
     return { flag: flags[c], display: formatPrice(converted, COUNTRY_CURRENCY[c]) }
@@ -265,26 +265,20 @@ export default function ProductList({ products }) {
               </p>
             </div>
             {country === 'ALL' && product.allCountryPrices?.length > 0 ? (
-            <div className="text-right flex-shrink-0">
-          {country === 'ALL' && product.allCountryPrices?.length > 0 ? (
-            product.allCountryPrices.map((p, i) => (
-              <p key={i} className="text-xs font-mono font-semibold text-[#E8A33D] whitespace-nowrap">
-                {p.flag} {p.display}
-              </p>
-            ))
-          ) : (
-            product.cheapestPriceDisplay && (
-              <p className="font-mono text-sm font-semibold text-[#E8A33D] whitespace-nowrap">
-                {product.cheapestPriceDisplay}
-              </p>
-            )
-          )}
-        </div>
-          ) : product.cheapestPriceDisplay && (
-            <p className="font-mono text-sm font-semibold text-[#E8A33D] whitespace-nowrap">
-              {product.cheapestPriceDisplay}
-            </p>
-          )}
+              <div className="text-right flex-shrink-0">
+                {product.allCountryPrices.map((p, i) => (
+                  <p key={i} className="text-xs font-mono font-semibold text-[#E8A33D] whitespace-nowrap">
+                    {p.flag} {p.display}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              product.cheapestPriceDisplay && (
+                <p className="font-mono text-sm font-semibold text-[#E8A33D] whitespace-nowrap">
+                  {product.cheapestPriceDisplay}
+                </p>
+              )
+            )}
           </Link>
         ))}
       </div>
