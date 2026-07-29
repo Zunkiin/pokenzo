@@ -1,32 +1,7 @@
 import { supabase } from '@/lib/supabase'
-import { toNOK, formatPrice } from '@/lib/currency'
 import HeroCarousel from '@/components/hero-carousel'
 import ProductList from '@/components/product-list'
 import CategoryNav from '@/components/category-nav'
-
-function mapProduct(product) {
-  const inStockListings = (product.listings || []).filter((l) => l.in_stock)
-  let cheapest = null
-  for (const listing of inStockListings) {
-    const nokPrice = toNOK(listing.current_price, listing.currency)
-    if (cheapest === null || nokPrice < cheapest.nokPrice) {
-      cheapest = { nokPrice, price: listing.current_price, currency: listing.currency }
-    }
-  }
-  return {
-    id: product.id,
-    slug: product.slug,
-    name: product.name,
-    description: product.description || '',
-    product_type: product.product_type,
-    language: product.language,
-    image_url: product.image_url,
-    clickCount: product.click_count || 0,
-    storeCount: product.listings ? product.listings.length : 0,
-    cheapestPriceNOK: cheapest ? cheapest.nokPrice : null,
-    cheapestPriceDisplay: cheapest ? formatPrice(cheapest.price, cheapest.currency) : null,
-  }
-}
 
 export const metadata = {
   title: 'Pokenzo - Pokémon Trading Card Game (TCG) Price Comparison for Scandinavia',
@@ -38,12 +13,14 @@ export default async function HomePage({ searchParams }) {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, slug, name, description, product_type, language, image_url, click_count, listings(current_price, currency, in_stock)')
+    .select('id, slug, name, product_type, language, image_url, click_count, listings(current_price, currency, in_stock, stores(country, ships_to))')
 
-  const allProducts = (products || []).map(mapProduct)
+  const allProducts = products || []
+
   let filteredProducts = allProducts
   if (type) filteredProducts = filteredProducts.filter((p) => p.product_type === type)
   if (language) filteredProducts = filteredProducts.filter((p) => p.language === language)
+
   const carouselProducts = allProducts.filter((p) => p.image_url)
 
   return (
@@ -51,10 +28,10 @@ export default async function HomePage({ searchParams }) {
       <HeroCarousel products={carouselProducts} />
 
       <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 mt-6">
-  <p className="text-sm text-[#8A8C9C] mb-4">
- Compare Pokémon Trading Card Game (TCG) prices and stock across Scandinavia.
-</p>
-  <CategoryNav activeType={type || null} activeLanguage={language || null} />
+        <p className="text-sm text-[#8A8C9C] mb-4">
+          Compare Pokémon Trading Card Game (TCG) prices and stock across Scandinavia.
+        </p>
+        <CategoryNav activeType={type || null} activeLanguage={language || null} />
         <h1 className="text-lg font-semibold mt-4 mb-4">All products</h1>
         <ProductList products={filteredProducts} />
       </div>
