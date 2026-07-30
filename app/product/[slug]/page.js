@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { toNOK, formatPrice } from '@/lib/currency'
+import { toNOK, convertCurrency, formatPrice, COUNTRY_CURRENCY } from '@/lib/currency'
 import Link from 'next/link'
 import BackButton from '@/components/back-button'
 import ProductListings from '@/components/product-listings'
@@ -13,6 +13,29 @@ function formatProductType(type) {
     booster_bundle: 'Booster Bundle',
   }
   return labels[type] || type
+}
+
+const FLAGS = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
+
+function getSuggestionCountryPrices(listings) {
+  const inStock = (listings || []).filter((l) => l.in_stock)
+  const countries = ['NO', 'SE', 'DK']
+
+  return countries.map((c) => {
+    const relevant = inStock.filter((l) => l.stores?.country === c || l.stores?.ships_to?.includes(c))
+    if (relevant.length === 0) return null
+
+    let cheapest = null
+    for (const listing of relevant) {
+      const nokPrice = toNOK(listing.current_price, listing.currency)
+      if (cheapest === null || nokPrice < cheapest.nokPrice) {
+        cheapest = { nokPrice, price: listing.current_price, currency: listing.currency }
+      }
+    }
+    const targetCurrency = COUNTRY_CURRENCY[c]
+    const converted = convertCurrency(cheapest.price, cheapest.currency, targetCurrency)
+    return { flag: FLAGS[c], display: formatPrice(converted, targetCurrency) }
+  }).filter(Boolean)
 }
 
 export async function generateMetadata({ params }) {
@@ -83,20 +106,12 @@ export default async function ProductPage({ params }) {
     shuffled.map(async (s) => {
       const { data: sListings } = await supabase
         .from('listings')
-        .select('current_price, currency, in_stock')
+        .select('current_price, currency, in_stock, stores(country, ships_to)')
         .eq('product_id', s.id)
 
-      const inStockListings = (sListings || []).filter((l) => l.in_stock)
-      let cheapest = null
-      if (inStockListings.length > 0) {
-        cheapest = inStockListings.reduce((min, l) => {
-          const priceInNOK = toNOK(l.current_price, l.currency)
-          const minInNOK = toNOK(min.current_price, min.currency)
-          return priceInNOK < minInNOK ? l : min
-        })
-      }
+      const countryPrices = getSuggestionCountryPrices(sListings)
 
-      return { ...s, cheapestPrice: cheapest }
+      return { ...s, countryPrices }
     })
   )
 
@@ -158,10 +173,14 @@ export default async function ProductPage({ params }) {
                       {s.language === 'JP' ? 'Japanese' : s.language === 'EN' ? 'English' : ''}
                     </p>
                   </div>
-                  {s.cheapestPrice && (
-                    <p className="font-mono text-sm font-semibold text-[#E8A33D] whitespace-nowrap">
-                      {formatPrice(s.cheapestPrice.current_price, s.cheapestPrice.currency)}
-                    </p>
+                  {s.countryPrices && s.countryPrices.length > 0 && (
+                    <div className="text-right flex-shrink-0">
+                      {s.countryPrices.map((p, i) => (
+                        <p key={i} className="font-mono text-xs font-semibold text-[#E8A33D] whitespace-nowrap">
+                          {p.flag} {p.display}
+                        </p>
+                      ))}
+                    </div>
                   )}
                 </Link>
               ))}
