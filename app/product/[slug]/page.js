@@ -52,13 +52,21 @@ export async function generateMetadata({ params }) {
 
   const description = product.description || `Compare prices for ${product.name} across Norway, Sweden and Denmark.`
 
+  // Discord (and some other link-preview crawlers) don't render AVIF images.
+  // Routing through Next's built-in image optimizer converts the source image
+  // (whatever format the store's own CDN happens to serve) to a widely supported
+  // format like WebP/JPEG before it's used as the OG/Twitter preview image.
+  const ogImage = product.image_url
+    ? `https://www.pokenzo.com/_next/image?url=${encodeURIComponent(product.image_url)}&w=1200&q=75`
+    : null
+
   return {
     title: `${product.name} | Pokenzo`,
     description,
     openGraph: {
       title: product.name,
       description,
-      images: product.image_url ? [{ url: product.image_url }] : [],
+      images: ogImage ? [{ url: ogImage }] : [],
     },
   }
 }
