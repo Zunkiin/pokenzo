@@ -11,6 +11,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'www.maxgaming.se' },
       { protocol: 'https', hostname: 'www.maxgaming.dk' },
       { protocol: 'https', hostname: 'www.mythic.no' },
+      { protocol: 'https', hostname: 'oyanpkxgduestvmapzpc.supabase.co' },
       { protocol: 'https', hostname: 'www.obs.no' },
     ],
   },
