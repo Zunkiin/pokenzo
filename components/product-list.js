@@ -173,7 +173,7 @@ export default function ProductList({ products }) {
 
   let sorted = filtered
   if (sortBy === 'clicked') {
-    sorted = [...filtered].sort((a, b) => (b.clickCount || 0) - (a.clickCount || 0))
+    sorted = [...filtered].sort((a, b) => (b.click_count || 0) - (a.click_count || 0))
   } else if (sortBy === 'price_asc') {
     sorted = [...filtered].sort((a, b) => (a.cheapestPriceNOK ?? Infinity) - (b.cheapestPriceNOK ?? Infinity))
   } else if (sortBy === 'price_desc') {
