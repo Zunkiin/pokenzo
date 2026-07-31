@@ -219,30 +219,41 @@ export default function ProductList({ products }) {
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <div className="flex-1 flex gap-2">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a product..."
-            className="flex-1 px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
-          />
+      <div className="relative mb-2">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search for a product..."
+          className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
+        />
+        {query && (
           <button
-            onClick={() => setInStockOnly((prev) => !prev)}
-            className={
-              inStockOnly
-                ? 'flex-shrink-0 text-xs font-semibold px-2.5 py-2 rounded-xl whitespace-nowrap bg-[#4FA8A0] text-[#14151F] border border-white'
-                : 'flex-shrink-0 text-xs font-medium px-2.5 py-2 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-white hover:border-[#4FA8A0] transition-colors'
-            }
+            onClick={() => setQuery('')}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-[#2A2C3D] text-[#C7C9D9] hover:bg-[#3A3C4D] text-xs leading-none"
           >
-            In Stock
+            ✕
           </button>
-        </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setInStockOnly((prev) => !prev)}
+          className={
+            inStockOnly
+              ? 'flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#4FA8A0]/15 text-[#4FA8A0] border border-[#4FA8A0]'
+              : 'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#2A2C3D] hover:border-[#4FA8A0] transition-colors'
+          }
+        >
+          <span className={'w-1.5 h-1.5 rounded-full ' + (inStockOnly ? 'bg-[#4FA8A0]' : 'bg-[#5C5E70]')} />
+          In Stock
+        </button>
         <select
           value={sortBy}
           onChange={handleSortChange}
-          className="px-3 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-sm focus:outline-none focus:border-[#E8A33D]"
+          className="flex-1 min-w-0 px-2 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-xs sm:text-sm focus:outline-none focus:border-[#E8A33D]"
         >
           <option value="random">Random</option>
           <option value="relevance">Relevance</option>
@@ -253,7 +264,7 @@ export default function ProductList({ products }) {
         <select
           value={visibleCount}
           onChange={(e) => setVisibleCount(Number(e.target.value))}
-          className="px-3 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-sm focus:outline-none focus:border-[#E8A33D]"
+          className="flex-1 min-w-0 px-2 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-xs sm:text-sm focus:outline-none focus:border-[#E8A33D]"
         >
           <option value={12}>Show 12</option>
           <option value={24}>Show 24</option>
