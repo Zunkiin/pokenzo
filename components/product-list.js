@@ -8,6 +8,8 @@ const RETURNING_FLAG_KEY = 'pokenzo_returning'
 const VISIBLE_COUNT_KEY = 'pokenzo_visible_count'
 const SORT_BY_KEY = 'pokenzo_sort_by'
 const COUNTRY_KEY = 'pokenzo_country'
+const QUERY_KEY = 'pokenzo_query'
+const IN_STOCK_KEY = 'pokenzo_in_stock_only'
 
 function shuffleArray(arr) {
   const copy = [...arr]
@@ -101,6 +103,7 @@ export default function ProductList({ products }) {
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState('random')
   const [country, setCountry] = useState('ALL')
+  const [inStockOnly, setInStockOnly] = useState(false)
   const [randomOrder, setRandomOrder] = useState(products)
   const [visibleCount, setVisibleCount] = useState(12)
 
@@ -111,6 +114,10 @@ export default function ProductList({ products }) {
       if (storedCount) setVisibleCount(Number(storedCount))
       const storedSort = sessionStorage.getItem(SORT_BY_KEY)
       if (storedSort) setSortBy(storedSort)
+      const storedQuery = sessionStorage.getItem(QUERY_KEY)
+      if (storedQuery) setQuery(storedQuery)
+      const storedInStock = sessionStorage.getItem(IN_STOCK_KEY)
+      if (storedInStock) setInStockOnly(storedInStock === 'true')
     }
     const storedCountry = localStorage.getItem(COUNTRY_KEY)
     if (storedCountry) setCountry(storedCountry)
@@ -158,13 +165,16 @@ export default function ProductList({ products }) {
     sessionStorage.setItem(RETURNING_FLAG_KEY, 'true')
     sessionStorage.setItem(VISIBLE_COUNT_KEY, String(visibleCount))
     sessionStorage.setItem(SORT_BY_KEY, sortBy)
+    sessionStorage.setItem(QUERY_KEY, query)
+    sessionStorage.setItem(IN_STOCK_KEY, String(inStockOnly))
   }
 
   const base = sortBy === 'random' ? randomOrder : products
   const enriched = base.map((p) => enrichProduct(p, country))
   const availableOnly = country === 'ALL' ? enriched : enriched.filter((p) => p.cheapestPriceDisplay !== null)
+  const stockFiltered = inStockOnly ? availableOnly.filter((p) => p.cheapestPriceDisplay !== null) : availableOnly
 
-  const filtered = availableOnly.filter((p) => {
+  const filtered = stockFiltered.filter((p) => {
     const lowerQuery = query.toLowerCase()
     const nameMatch = p.name.toLowerCase().includes(lowerQuery)
     const descMatch = (p.description || '').toLowerCase().includes(lowerQuery)
@@ -238,6 +248,16 @@ export default function ProductList({ products }) {
           <option value={48}>Show 48</option>
           <option value={-1}>Show all</option>
         </select>
+        <button
+          onClick={() => setInStockOnly((prev) => !prev)}
+          className={
+            inStockOnly
+              ? 'flex-shrink-0 text-sm font-semibold px-3 py-2.5 rounded-xl whitespace-nowrap bg-[#4FA8A0] text-[#14151F]'
+              : 'flex-shrink-0 text-sm font-medium px-3 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#2A2C3D] hover:border-[#4FA8A0] transition-colors'
+          }
+        >
+          In Stock
+        </button>
       </div>
 
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
