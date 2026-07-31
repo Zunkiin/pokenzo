@@ -244,7 +244,7 @@ export default function ProductList({ products }) {
           className={
             inStockOnly
               ? 'flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#4FA8A0]/15 text-[#4FA8A0] border border-[#4FA8A0]'
-              : 'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#2A2C3D] hover:border-[#4FA8A0] transition-colors'
+              : 'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#4FA8A0] hover:text-[#4FA8A0] transition-colors'
           }
         >
           <span className={'w-1.5 h-1.5 rounded-full ' + (inStockOnly ? 'bg-[#4FA8A0]' : 'bg-[#5C5E70]')} />
