@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const categories = [
-  { label: 'All', type: null },
+  { label: 'All Products', type: null },
   { label: 'Booster Boxes', type: 'booster_box' },
   { label: 'Booster Packs', type: 'single_booster' },
   { label: 'Elite Trainer Boxes', type: 'etb' },

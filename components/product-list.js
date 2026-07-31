@@ -195,7 +195,7 @@ export default function ProductList({ products }) {
   const visible = visibleCount === -1 ? sorted : sorted.slice(0, visibleCount)
 
   const countryOptions = [
-    { value: 'ALL', label: '🌍 All' },
+    { value: 'ALL', label: '🌍 All Countries' },
     { value: 'NO', label: '🇳🇴 Norway' },
     { value: 'SE', label: '🇸🇪 Sweden' },
     { value: 'DK', label: '🇩🇰 Denmark' },
