@@ -220,13 +220,25 @@ export default function ProductList({ products }) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for a product..."
-          className="flex-1 px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
-        />
+        <div className="flex-1 flex gap-2">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for a product..."
+            className="flex-1 px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
+          />
+          <button
+            onClick={() => setInStockOnly((prev) => !prev)}
+            className={
+              inStockOnly
+                ? 'flex-shrink-0 text-xs font-semibold px-2.5 py-2 rounded-xl whitespace-nowrap bg-[#4FA8A0] text-[#14151F] border border-white'
+                : 'flex-shrink-0 text-xs font-medium px-2.5 py-2 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-white hover:border-[#4FA8A0] transition-colors'
+            }
+          >
+            In Stock
+          </button>
+        </div>
         <select
           value={sortBy}
           onChange={handleSortChange}
@@ -248,16 +260,6 @@ export default function ProductList({ products }) {
           <option value={48}>Show 48</option>
           <option value={-1}>Show all</option>
         </select>
-        <button
-          onClick={() => setInStockOnly((prev) => !prev)}
-          className={
-            inStockOnly
-              ? 'flex-shrink-0 text-sm font-semibold px-3 py-2.5 rounded-xl whitespace-nowrap bg-[#4FA8A0] text-[#14151F]'
-              : 'flex-shrink-0 text-sm font-medium px-3 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#2A2C3D] hover:border-[#4FA8A0] transition-colors'
-          }
-        >
-          In Stock
-        </button>
       </div>
 
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">

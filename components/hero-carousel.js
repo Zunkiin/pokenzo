@@ -2,6 +2,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toNOK, convertCurrency, formatPrice, COUNTRY_CURRENCY } from '@/lib/currency'
+
+const COUNTRY_KEY = 'pokenzo_country'
 
 function shuffle(array) {
   const copy = [...array]
@@ -12,15 +15,43 @@ function shuffle(array) {
   return copy
 }
 
+function getCheapestPriceDisplay(product, country) {
+  const inStock = (product.listings || []).filter((l) => l.in_stock)
+  const relevant = country === 'ALL'
+    ? inStock
+    : inStock.filter((l) => l.stores?.country === country || l.stores?.ships_to?.includes(country))
+
+  if (relevant.length === 0) return null
+
+  let cheapest = null
+  for (const listing of relevant) {
+    const nokPrice = toNOK(listing.current_price, listing.currency)
+    if (cheapest === null || nokPrice < cheapest.nokPrice) {
+      cheapest = { nokPrice, price: listing.current_price, currency: listing.currency }
+    }
+  }
+
+  if (country === 'ALL') return formatPrice(cheapest.nokPrice, 'NOK')
+  const targetCurrency = COUNTRY_CURRENCY[country]
+  const converted = convertCurrency(cheapest.price, cheapest.currency, targetCurrency)
+  return formatPrice(converted, targetCurrency)
+}
+
 export default function HeroCarousel({ products }) {
   const router = useRouter()
   const [shuffledProducts, setShuffledProducts] = useState(products)
   const [index, setIndex] = useState(0)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [country, setCountry] = useState('ALL')
   const touchStartX = useRef(null)
   const containerRef = useRef(null)
   const hasMovedRef = useRef(false)
+
+  useEffect(() => {
+    const storedCountry = localStorage.getItem(COUNTRY_KEY)
+    if (storedCountry) setCountry(storedCountry)
+  }, [])
 
   useEffect(() => {
     setShuffledProducts(shuffle(products))
@@ -107,9 +138,9 @@ export default function HeroCarousel({ products }) {
               <h2 className="text-xl font-semibold text-[#EDEAE3] leading-snug">
                 {p.name}
               </h2>
-              {p.cheapestPriceDisplay && (
+              {getCheapestPriceDisplay(p, country) && (
                 <p className="text-sm text-[#C7C9D9] mt-1">
-                  Fra <span className="font-mono text-[#E8A33D] font-semibold">{p.cheapestPriceDisplay}</span>
+                  Fra <span className="font-mono text-[#E8A33D] font-semibold">{getCheapestPriceDisplay(p, country)}</span>
                 </p>
               )}
             </div>
