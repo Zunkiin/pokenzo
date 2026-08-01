@@ -98,17 +98,39 @@ export async function addListingAction(formData) {
 
 export async function deleteListingAction(formData) {
   const supabase = getSupabaseAdmin()
-  await supabase.from('listings').delete().eq('id', formData.get('listing_id'))
+  const listingId = formData.get('listing_id')
+
+  // price_history rows reference this listing via a foreign key, so they
+  // must be deleted first or the listing delete will silently fail.
+  const { error: historyError } = await supabase
+    .from('price_history')
+    .delete()
+    .eq('listing_id', listingId)
+
+  if (historyError) {
+    throw new Error('Failed to delete price history: ' + historyError.message)
+  }
+
+  const { error } = await supabase.from('listings').delete().eq('id', listingId)
+
+  if (error) {
+    throw new Error('Failed to delete listing: ' + error.message)
+  }
+
   redirect('/admin')
 }
 
 export async function updateProductAction(formData) {
   const supabase = getSupabaseAdmin()
 
+  const name = formData.get('product_name')
+  const slug = slugify(name)
+
   await supabase
     .from('products')
     .update({
-      name: formData.get('product_name'),
+      name,
+      slug,
       product_type: formData.get('product_type'),
       language: formData.get('language'),
       image_url: formData.get('image_url') || null,
