@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import HeroCarousel from '@/components/hero-carousel'
 import ProductList from '@/components/product-list'
 import CategoryNav from '@/components/category-nav'
+import SectionTabs from '@/components/section-tabs'
 
 export const metadata = {
   title: 'Pokenzo - Pokémon Trading Card Game (TCG) Price Comparison for Scandinavia',
@@ -31,8 +32,9 @@ export default async function HomePage({ searchParams }) {
         <p className="text-sm text-[#8A8C9C] mb-4">
           Compare Pokémon Trading Card Game (TCG) prices and stock across Scandinavia.
         </p>
+        <SectionTabs active="tcg" />
         <CategoryNav activeType={type || null} activeLanguage={language || null} />
-        <h1 className="text-lg font-semibold mt-4 mb-4">All products</h1>
+        <h1 className="sr-only">All Pokémon TCG products</h1>
         <ProductList products={filteredProducts} />
       </div>
     </main>

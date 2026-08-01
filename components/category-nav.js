@@ -1,3 +1,5 @@
+'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 
 const categories = [
@@ -22,46 +24,96 @@ function buildHref(type, language) {
   return query ? '/?' + query : '/'
 }
 
-export default function CategoryNav({ activeType, activeLanguage }) {
+function Chevron({ open }) {
   return (
-    <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3">
-      <div className="flex flex-wrap gap-2 pb-1">
-        {categories.map((cat) => {
-          const isActive = activeType === cat.type
-          const className = isActive
-            ? 'flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap bg-[#E8A33D] text-[#14151F] border border-[#E8A33D]'
-            : 'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#14151F] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors'
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={'flex-shrink-0 transition-transform ' + (open ? 'rotate-180' : '')}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
 
-          return (
-            <Link key={cat.label} href={buildHref(cat.type, activeLanguage)} className={className}>
-              {cat.label}
-            </Link>
-          )
-        })}
-      </div>
+export default function CategoryNav({ activeType, activeLanguage }) {
+  const [openPanel, setOpenPanel] = useState(null) // 'category' | 'language' | null
 
-      <div className="flex flex-wrap gap-2 pb-1 mt-2 pt-2 border-t border-[#2A2C3D]">
-        {languages.map((lang) => {
-          const isActive = activeLanguage === lang.value
-          const className = isActive
-            ? 'flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap bg-[#4FA8A0] text-[#14151F] border border-[#4FA8A0]'
-            : 'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#14151F] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#4FA8A0] hover:text-[#4FA8A0] transition-colors'
+  const activeCategoryLabel = categories.find((c) => c.type === activeType)?.label || 'All Products'
+  const activeLanguageLabel = languages.find((l) => l.value === activeLanguage)?.label || 'All Languages'
 
-          return (
-            <Link key={lang.label} href={buildHref(activeType, lang.value)} className={className}>
-              {lang.label}
-            </Link>
-          )
-        })}
-      </div>
+  return (
+    <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3 mb-4">
+      <div className="flex gap-2">
+        <div className="relative flex-1 min-w-0">
+          <button
+            onClick={() => setOpenPanel(openPanel === 'category' ? null : 'category')}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#14151F] border border-[#4A4D67] text-[#C7C9D9] text-xs font-semibold hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+          >
+            <span className="truncate">{activeCategoryLabel}</span>
+            <Chevron open={openPanel === 'category'} />
+          </button>
 
-      <div className="mt-2 pt-2 border-t border-[#2A2C3D]">
-        <Link
-          href="/pokemon-go"
-          className="inline-block text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#14151F] text-[#4FA8A0] border border-[#4FA8A0]/50 hover:border-[#4FA8A0] transition-colors"
-        >
-          Pokémon GO Community (Raids and Trades)
-        </Link>
+          {openPanel === 'category' && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setOpenPanel(null)} />
+              <div className="absolute left-0 right-0 sm:right-auto sm:min-w-[260px] top-full mt-2 z-50 bg-[#1E2030] border border-[#2A2C3D] rounded-xl p-3 shadow-xl">
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((item) => {
+                    const isActive = activeType === item.type
+                    return (
+                      <Link
+                        key={item.label}
+                        href={buildHref(item.type, activeLanguage)}
+                        onClick={() => setOpenPanel(null)}
+                        className={
+                          isActive
+                            ? 'text-xs font-semibold px-3 py-2 rounded-full border bg-[#E8A33D] text-[#14151F] border-[#E8A33D]'
+                            : 'text-xs font-medium px-3 py-2 rounded-full border border-[#4A4D67] bg-[#14151F] text-[#C7C9D9] hover:border-[#E8A33D] hover:text-[#E8A33D]'
+                        }
+                      >
+                        {item.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="relative flex-1 min-w-0">
+          <button
+            onClick={() => setOpenPanel(openPanel === 'language' ? null : 'language')}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#14151F] border border-[#4A4D67] text-[#C7C9D9] text-xs font-semibold hover:border-[#4FA8A0] hover:text-[#4FA8A0] transition-colors"
+          >
+            <span className="truncate">{activeLanguageLabel}</span>
+            <Chevron open={openPanel === 'language'} />
+          </button>
+
+          {openPanel === 'language' && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setOpenPanel(null)} />
+              <div className="absolute right-0 left-auto sm:min-w-[220px] top-full mt-2 z-50 bg-[#1E2030] border border-[#2A2C3D] rounded-xl p-3 shadow-xl">
+                <div className="flex flex-wrap gap-2">
+                  {languages.map((item) => {
+                    const isActive = activeLanguage === item.value
+                    return (
+                      <Link
+                        key={item.label}
+                        href={buildHref(activeType, item.value)}
+                        onClick={() => setOpenPanel(null)}
+                        className={
+                          isActive
+                            ? 'text-xs font-semibold px-3 py-2 rounded-full border bg-[#4FA8A0] text-[#14151F] border-[#4FA8A0]'
+                            : 'text-xs font-medium px-3 py-2 rounded-full border border-[#4A4D67] bg-[#14151F] text-[#C7C9D9] hover:border-[#4FA8A0] hover:text-[#4FA8A0]'
+                        }
+                      >
+                        {item.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

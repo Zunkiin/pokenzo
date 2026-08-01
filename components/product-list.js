@@ -104,6 +104,7 @@ export default function ProductList({ products }) {
   const [sortBy, setSortBy] = useState('random')
   const [country, setCountry] = useState('ALL')
   const [inStockOnly, setInStockOnly] = useState(false)
+  const [showCountryPanel, setShowCountryPanel] = useState(false)
   const [randomOrder, setRandomOrder] = useState(products)
   const [visibleCount, setVisibleCount] = useState(12)
 
@@ -201,76 +202,101 @@ export default function ProductList({ products }) {
     { value: 'DK', label: '🇩🇰 Denmark' },
   ]
 
+  const activeCountryLabel = countryOptions.find((o) => o.value === country)?.label
+
   return (
     <div>
-      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-        {countryOptions.map((opt) => (
+      <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3 mb-4">
+        <div className="relative">
           <button
-            key={opt.value}
-            onClick={() => handleCountryChange(opt.value)}
+            onClick={() => setShowCountryPanel((prev) => !prev)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#14151F] border border-[#4A4D67] text-[#C7C9D9] text-xs font-semibold hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+          >
+            <span>{activeCountryLabel}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={'flex-shrink-0 transition-transform ' + (showCountryPanel ? 'rotate-180' : '')}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          {showCountryPanel && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowCountryPanel(false)} />
+              <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-[#1E2030] border border-[#2A2C3D] rounded-xl p-3 shadow-xl">
+                <div className="flex flex-wrap gap-2">
+                  {countryOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { handleCountryChange(opt.value); setShowCountryPanel(false) }}
+                      className={
+                        country === opt.value
+                          ? 'text-xs font-semibold px-3 py-2 rounded-full bg-[#E8A33D] text-[#14151F] border border-[#E8A33D]'
+                          : 'text-xs font-medium px-3 py-2 rounded-full bg-[#14151F] text-[#C7C9D9] border border-[#4A4D67]'
+                      }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for a product..."
+            className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-[#2A2C3D] text-[#C7C9D9] hover:bg-[#3A3C4D] text-xs leading-none"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => setInStockOnly((prev) => !prev)}
             className={
-              country === opt.value
-                ? 'flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap bg-[#E8A33D] text-[#14151F]'
-                : 'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#2A2C3D] hover:border-[#E8A33D] transition-colors'
+              inStockOnly
+                ? 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl whitespace-nowrap bg-[#4FA8A0]/15 text-[#4FA8A0] border border-[#4FA8A0]'
+                : 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#4FA8A0] transition-colors'
             }
           >
-            {opt.label}
+            <span className={'w-1.5 h-1.5 rounded-full ' + (inStockOnly ? 'bg-[#4FA8A0]' : 'bg-[#5C5E70]')} />
+            In Stock
           </button>
-        ))}
-      </div>
-
-      <div className="relative mb-2">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for a product..."
-          className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
-        />
-        {query && (
-          <button
-            onClick={() => setQuery('')}
-            aria-label="Clear search"
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-[#2A2C3D] text-[#C7C9D9] hover:bg-[#3A3C4D] text-xs leading-none"
+          <select
+            value={sortBy}
+            onChange={handleSortChange}
+            className="flex-1 sm:flex-none min-w-0 px-2 sm:px-3 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-xs sm:text-sm focus:outline-none focus:border-[#E8A33D]"
           >
-            ✕
-          </button>
-        )}
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setInStockOnly((prev) => !prev)}
-          className={
-            inStockOnly
-              ? 'flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#4FA8A0]/15 text-[#4FA8A0] border border-[#4FA8A0]'
-              : 'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium px-2 py-2.5 rounded-xl whitespace-nowrap bg-[#1E2030] text-[#C7C9D9] border border-[#4A4D67] hover:border-[#4FA8A0] hover:text-[#4FA8A0] transition-colors'
-          }
-        >
-          <span className={'w-1.5 h-1.5 rounded-full ' + (inStockOnly ? 'bg-[#4FA8A0]' : 'bg-[#5C5E70]')} />
-          In Stock
-        </button>
-        <select
-          value={sortBy}
-          onChange={handleSortChange}
-          className="flex-1 min-w-0 px-2 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-xs sm:text-sm focus:outline-none focus:border-[#E8A33D]"
-        >
-          <option value="random">Random</option>
-          <option value="relevance">Relevance</option>
-          <option value="clicked">Most Popular</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-        </select>
-        <select
-          value={visibleCount}
-          onChange={(e) => setVisibleCount(Number(e.target.value))}
-          className="flex-1 min-w-0 px-2 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-xs sm:text-sm focus:outline-none focus:border-[#E8A33D]"
-        >
-          <option value={12}>Show 12</option>
-          <option value={24}>Show 24</option>
-          <option value={48}>Show 48</option>
-          <option value={-1}>Show all</option>
-        </select>
+            <option value="random">Random</option>
+            <option value="relevance">Relevance</option>
+            <option value="clicked">Most Popular</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
+          <select
+            value={visibleCount}
+            onChange={(e) => setVisibleCount(Number(e.target.value))}
+            className="flex-1 sm:flex-none min-w-0 px-2 sm:px-3 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] text-xs sm:text-sm focus:outline-none focus:border-[#E8A33D]"
+          >
+            <option value={12}>Show 12</option>
+            <option value={24}>Show 24</option>
+            <option value={48}>Show 48</option>
+            <option value={-1}>Show all</option>
+          </select>
+        </div>
       </div>
 
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
