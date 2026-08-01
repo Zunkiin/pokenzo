@@ -14,6 +14,7 @@ const languages = [
   { label: 'All Languages', value: null },
   { label: 'Japanese', value: 'JP' },
   { label: 'English', value: 'EN' },
+  { label: 'Chinese', value: 'CN' },
 ]
 
 function buildHref(type, language) {

@@ -130,7 +130,7 @@ export default async function ProductPage({ params }) {
 
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8A8C9C] mb-2">
-            {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : ''} · {formatProductType(product.product_type)}
+            {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : product.language === 'CN' ? 'Chinese' : ''} · {formatProductType(product.product_type)}
           </p>
           <h1 className="text-2xl font-semibold leading-tight mb-4">
             {product.name}
@@ -178,7 +178,7 @@ export default async function ProductPage({ params }) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{s.name}</p>
                     <p className="text-xs text-[#8A8C9C]">
-                      {s.language === 'JP' ? 'Japanese' : s.language === 'EN' ? 'English' : ''}
+                      {s.language === 'JP' ? 'Japanese' : s.language === 'EN' ? 'English' : s.language === 'CN' ? 'Chinese' : ''}
                     </p>
                   </div>
                   {s.countryPrices && s.countryPrices.length > 0 && (

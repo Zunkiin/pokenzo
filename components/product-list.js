@@ -206,41 +206,39 @@ export default function ProductList({ products }) {
 
   return (
     <div>
-      <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3 mb-4">
-        <div className="relative">
-          <button
-            onClick={() => setShowCountryPanel((prev) => !prev)}
-            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#14151F] border border-[#4A4D67] text-[#C7C9D9] text-xs font-semibold hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
-          >
-            <span>{activeCountryLabel}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={'flex-shrink-0 transition-transform ' + (showCountryPanel ? 'rotate-180' : '')}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+      <div className="relative mb-4">
+        <button
+          onClick={() => setShowCountryPanel((prev) => !prev)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#14151F] border border-[#4A4D67] text-[#C7C9D9] text-xs font-semibold hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+        >
+          <span>{activeCountryLabel}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={'flex-shrink-0 transition-transform ' + (showCountryPanel ? 'rotate-180' : '')}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
 
-          {showCountryPanel && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowCountryPanel(false)} />
-              <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-[#1E2030] border border-[#2A2C3D] rounded-xl p-3 shadow-xl">
-                <div className="flex flex-wrap gap-2">
-                  {countryOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => { handleCountryChange(opt.value); setShowCountryPanel(false) }}
-                      className={
-                        country === opt.value
-                          ? 'text-xs font-semibold px-3 py-2 rounded-full bg-[#E8A33D] text-[#14151F] border border-[#E8A33D]'
-                          : 'text-xs font-medium px-3 py-2 rounded-full bg-[#14151F] text-[#C7C9D9] border border-[#4A4D67]'
-                      }
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-                </div>
+        {showCountryPanel && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowCountryPanel(false)} />
+            <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-[#1E2030] border border-[#2A2C3D] rounded-xl p-3 shadow-xl">
+              <div className="flex flex-wrap gap-2">
+                {countryOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { handleCountryChange(opt.value); setShowCountryPanel(false) }}
+                    className={
+                      country === opt.value
+                        ? 'text-xs font-semibold px-3 py-2 rounded-full bg-[#E8A33D] text-[#14151F] border border-[#E8A33D]'
+                        : 'text-xs font-medium px-3 py-2 rounded-full bg-[#14151F] text-[#C7C9D9] border border-[#4A4D67]'
+                    }
+                >
+                  {opt.label}
+                </button>
+              ))}
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -320,7 +318,7 @@ export default function ProductList({ products }) {
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{product.name}</p>
               <p className="text-xs text-[#8A8C9C]">
-                {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : ''} · {product.storeCount} {product.storeCount === 1 ? 'store' : 'stores'}
+                {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : product.language === 'CN' ? 'Chinese' : ''} · {product.storeCount} {product.storeCount === 1 ? 'store' : 'stores'}
               </p>
             </div>
             {country === 'ALL' && product.allCountryPrices?.length > 0 ? (

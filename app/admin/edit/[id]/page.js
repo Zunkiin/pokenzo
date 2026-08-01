@@ -49,6 +49,7 @@ export default async function EditProductPage({ params }) {
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
               <option value="JP">Japanese</option>
               <option value="EN">English</option>
+              <option value="CN">Chinese</option>
             </select>
             <input name="image_url" defaultValue={product.image_url || ''} placeholder="Image URL"
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
