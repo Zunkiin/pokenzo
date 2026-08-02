@@ -14,7 +14,7 @@ export default async function HomePage({ searchParams }) {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, slug, name, product_type, language, image_url, description, click_count, listings(current_price, currency, in_stock, stores(country, ships_to))')
+    .select('id, slug, name, product_type, language, image_url, description, release_date, click_count, listings(current_price, currency, in_stock, stores(country, ships_to))')
 
   const allProducts = products || []
 

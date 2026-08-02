@@ -51,6 +51,11 @@ export default async function EditProductPage({ params }) {
               <option value="EN">English</option>
               <option value="CN">Chinese</option>
             </select>
+            <div>
+              <label className="block text-xs text-[#8A8C9C] mb-1">Release date</label>
+              <input name="release_date" type="date" defaultValue={product.release_date || ''} required
+                className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]" />
+            </div>
             <input name="image_url" defaultValue={product.image_url || ''} placeholder="Image URL"
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
             {product.image_url && (

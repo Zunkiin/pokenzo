@@ -191,6 +191,18 @@ export default function ProductList({ products }) {
     sorted = [...filtered].sort((a, b) => (b.cheapestPriceNOK ?? -Infinity) - (a.cheapestPriceNOK ?? -Infinity))
   } else if (sortBy === 'relevance') {
     sorted = [...filtered].sort((a, b) => relevanceScore(a, query) - relevanceScore(b, query))
+  } else if (sortBy === 'newest') {
+    sorted = [...filtered].sort((a, b) => {
+      const dateA = a.release_date ? new Date(a.release_date).getTime() : -Infinity
+      const dateB = b.release_date ? new Date(b.release_date).getTime() : -Infinity
+      return dateB - dateA
+    })
+  } else if (sortBy === 'oldest') {
+    sorted = [...filtered].sort((a, b) => {
+      const dateA = a.release_date ? new Date(a.release_date).getTime() : Infinity
+      const dateB = b.release_date ? new Date(b.release_date).getTime() : Infinity
+      return dateA - dateB
+    })
   }
 
   const visible = visibleCount === -1 ? sorted : sorted.slice(0, visibleCount)
@@ -281,6 +293,8 @@ export default function ProductList({ products }) {
             <option value="random">Random</option>
             <option value="relevance">Relevance</option>
             <option value="clicked">Most Popular</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>
           </select>

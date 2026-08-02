@@ -56,6 +56,7 @@ export async function addProductAction(formData) {
       name,
       product_type: formData.get('product_type'),
       language: formData.get('language'),
+      release_date: formData.get('release_date') || null,
       image_url: formData.get('image_url') || null,
       description: formData.get('description') || null,
       slug,
@@ -133,6 +134,7 @@ export async function updateProductAction(formData) {
       slug,
       product_type: formData.get('product_type'),
       language: formData.get('language'),
+      release_date: formData.get('release_date') || null,
       image_url: formData.get('image_url') || null,
       description: formData.get('description') || null,
     })
