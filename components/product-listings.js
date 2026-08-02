@@ -119,15 +119,21 @@ export default function ProductListings({ listings }) {
           const stockTextClass = listing.in_stock ? 'text-xs mt-1 text-[#4FA8A0]' : 'text-xs mt-1 text-[#C1554A]'
           const buttonClass = listing.in_stock
             ? 'text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-[#E8A33D] text-[#14151F]'
-            : 'text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-[#2A2C3D] text-[#8A8C9C] pointer-events-none'
+            : 'text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-[#2A2C3D] text-[#8A8C9C]'
           const storeName = listing.stores ? listing.stores.name : 'Unknown store'
           const shipsTo = listing.stores?.ships_to && listing.stores.ships_to.length > 0
             ? listing.stores.ships_to
             : (listing.stores ? [listing.stores.country] : [])
-          const buttonText = listing.in_stock ? 'Buy at ' + storeName : 'Out of stock'
+          const buttonText = listing.in_stock ? 'Buy at ' + storeName : 'Visit store'
 
           return (
-            <div key={listing.id} className={cardClass}>
+            <a
+              key={listing.id}
+              href={listing.product_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cardClass + ' block hover:border-[#E8A33D] transition-colors'}
+            >
               {isCheapest && (
                 <p className="text-[10px] uppercase tracking-[0.15em] text-[#E8A33D] font-semibold mb-2">
                   Best price
@@ -163,11 +169,11 @@ export default function ProductListings({ listings }) {
                 <p className="text-[11px] text-[#5C5E70]">
                   Checked {formatCheckedAt(listing.last_checked_at)}
                 </p>
-                <a href={listing.product_url} target="_blank" rel="noopener noreferrer" className={buttonClass}>
+                <span className={buttonClass}>
                   {buttonText}
-                </a>
+                </span>
               </div>
-            </div>
+            </a>
           )
         })}
       </div>
