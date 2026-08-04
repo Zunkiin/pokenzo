@@ -150,6 +150,7 @@ export async function updateListingAction(formData) {
     .from('listings')
     .update({
       current_price: parseFloat(formData.get('price')),
+      currency: formData.get('currency'),
       in_stock: formData.get('in_stock') === 'on',
       product_url: formData.get('product_url'),
       last_checked_at: new Date().toISOString(),

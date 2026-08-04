@@ -89,7 +89,14 @@ export default async function EditProductPage({ params }) {
                       name="price" type="number" step="0.01" defaultValue={listing.current_price}
                       className="w-24 px-2 py-1.5 rounded-lg bg-[#1E2030] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]"
                     />
-                    <span className="text-xs text-[#8A8C9C]">{listing.currency}</span>
+                    <select
+                      name="currency" defaultValue={listing.currency}
+                      className="px-2 py-1.5 rounded-lg bg-[#1E2030] border border-[#2A2C3D] text-xs focus:outline-none focus:border-[#E8A33D]"
+                    >
+                      <option value="NOK">NOK</option>
+                      <option value="SEK">SEK</option>
+                      <option value="DKK">DKK</option>
+                    </select>
                     <label className="flex items-center gap-1 text-xs text-[#C7C9D9]">
                       <input type="checkbox" name="in_stock" defaultChecked={listing.in_stock} className="accent-[#E8A33D]" />
                       In stock
