@@ -7,7 +7,7 @@ export default function Footer() {
         href="https://buymeacoffee.com/pokenzo"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-full bg-[#E8A33D] text-[#14151F] hover:bg-[#f0b158] transition-colors mb-6"
+        className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full bg-[#E8A33D]/15 text-[#E8A33D] border border-[#E8A33D] hover:bg-[#E8A33D]/25 transition-colors mb-6"
       >
         <span>☕</span>
         Buy me a coffee
