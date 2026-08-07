@@ -18,7 +18,7 @@ function getCountryBadgeClass(country) {
     return 'inline-block text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-[#C60C30] text-white mr-2 align-middle'
   }
   if (country === 'NO') {
-    return 'inline-block text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded border border-[#EDEAE3] text-[#EDEAE3] bg-transparent mr-2 align-middle'
+    return 'inline-block text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-[#00205B] border border-[#EF2B2D] text-white mr-2 align-middle'
   }
   return 'inline-block text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-[#2A2C3D] text-[#8A8C9C] mr-2 align-middle'
 }
