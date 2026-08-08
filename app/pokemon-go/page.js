@@ -158,7 +158,7 @@ export default function PokemonGoTestPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
+    <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-24 pb-16">
       <div className="max-w-md mx-auto space-y-6">
         <SectionTabs active="go" />
 
