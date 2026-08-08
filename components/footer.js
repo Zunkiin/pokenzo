@@ -16,6 +16,10 @@ export default function Footer() {
         Pokenzo is an independent, fan-made project and is not endorsed by, affiliated with, or sponsored by Nintendo, Niantic, GAME FREAK, or The Pokémon Company. All Pokémon names, images, and related trademarks belong to their respective owners. Pokenzo provides price comparisons and community tools for Pokémon fans and does not claim ownership of any Pokémon content shown on this site.
       </p>
       <div className="flex items-center justify-center gap-3 mt-3">
+        <Link href="/about" className="text-xs text-[#8A8C9C] hover:text-[#E8A33D] transition-colors">
+          About
+        </Link>
+        <span className="text-xs text-[#5C5E70]">·</span>
         <Link href="/privacy" className="text-xs text-[#8A8C9C] hover:text-[#E8A33D] transition-colors">
           Privacy Policy
         </Link>
