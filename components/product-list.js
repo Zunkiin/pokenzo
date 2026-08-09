@@ -11,6 +11,10 @@ const COUNTRY_KEY = 'pokenzo_country'
 const QUERY_KEY = 'pokenzo_query'
 const IN_STOCK_KEY = 'pokenzo_in_stock_only'
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 function shuffleArray(arr) {
   const copy = [...arr]
   for (let i = copy.length - 1; i > 0; i--) {
@@ -178,8 +182,15 @@ export default function ProductList({ products }) {
   const filtered = stockFiltered.filter((p) => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean)
     if (words.length === 0) return true
+    const name = p.name.toLowerCase()
     const haystack = (p.name + ' ' + (p.description || '')).toLowerCase()
-    return words.every((word) => haystack.includes(word))
+    return words.every((word) => {
+      const pattern = new RegExp('\\b' + escapeRegex(word) + '\\b')
+      // Pure numbers are ambiguous in descriptions (card counts, pack counts, etc.)
+      // so only match them against the product name, where volume numbers actually live.
+      const isNumeric = /^\d+$/.test(word)
+      return pattern.test(isNumeric ? name : haystack)
+    })
   })
 
   let sorted = filtered
@@ -259,7 +270,7 @@ export default function ProductList({ products }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a product..."
+            placeholder="Search for a product or pokémon..."
             className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
           />
           {query && (
