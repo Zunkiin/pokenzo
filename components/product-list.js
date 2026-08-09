@@ -176,10 +176,10 @@ export default function ProductList({ products }) {
   const stockFiltered = inStockOnly ? availableOnly.filter((p) => p.cheapestPriceDisplay !== null) : availableOnly
 
   const filtered = stockFiltered.filter((p) => {
-    const lowerQuery = query.toLowerCase()
-    const nameMatch = p.name.toLowerCase().includes(lowerQuery)
-    const descMatch = (p.description || '').toLowerCase().includes(lowerQuery)
-    return nameMatch || descMatch
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+    if (words.length === 0) return true
+    const haystack = (p.name + ' ' + (p.description || '')).toLowerCase()
+    return words.every((word) => haystack.includes(word))
   })
 
   let sorted = filtered
