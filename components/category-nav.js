@@ -8,6 +8,7 @@ const categories = [
   { label: 'Booster Packs', type: 'single_booster' },
   { label: 'Elite Trainer Boxes', type: 'etb' },
   { label: 'Booster Bundles', type: 'booster_bundle' },
+  { label: 'Collection Boxes', type: 'collection_box' },
 ]
 
 const languages = [

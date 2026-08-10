@@ -11,6 +11,7 @@ function formatProductType(type) {
     single_booster: 'Booster Pack',
     etb: 'Elite Trainer Box',
     booster_bundle: 'Booster Bundle',
+    collection_box: 'Collection Box',
   }
   return labels[type] || type
 }
@@ -89,7 +90,7 @@ export default async function ProductPage({ params }) {
 
   const { data: listings } = await supabase
     .from('listings')
-    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
+    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to, discount_code)')
     .eq('product_id', product?.id)
 
   if (!product) {
