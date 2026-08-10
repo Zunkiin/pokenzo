@@ -271,7 +271,7 @@ export default function ProductList({ products }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a product or pokémon..."
+            placeholder="Search for a product or store..."
             className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
           />
           {query && (
