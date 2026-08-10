@@ -90,7 +90,7 @@ export default async function ProductPage({ params }) {
 
   const { data: listings } = await supabase
     .from('listings')
-    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to, discount_code)')
+    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
     .eq('product_id', product?.id)
 
   if (!product) {
