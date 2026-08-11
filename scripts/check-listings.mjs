@@ -70,8 +70,8 @@ function getRelevantSection(fullText, productName) {
 }
 
 function extractPrice(text) {
-  const match = text.match(/(\d[\d\s]{1,6}(?:[.,]\d{2})?)\s?(?:kr|nok|sek|dkk)/i)
-  return match ? parseFloat(match[1].replace(/\s/g, '').replace(',', '.')) : null
+  const match = text.match(/(\d[\d\s.,]{0,8})\s?(?:kr|nok|sek|dkk)/i)
+  return match ? parsePriceString(match[1]) : null
 }
 
 function extractMetaPrice(html) {
