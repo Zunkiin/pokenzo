@@ -111,8 +111,15 @@ function extractMetaAvailability(html) {
   return null
 }
 
-async function sendDiscordAlert(message) {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL
+async function sendDiscordAlert(message, country) {
+  // Route each alert to the Discord channel matching the store's country,
+  // so #alerts channels can be split per country instead of one shared feed.
+  const webhookMap = {
+    NO: process.env.DISCORD_WEBHOOK_URL_NO,
+    SE: process.env.DISCORD_WEBHOOK_URL_SE,
+    DK: process.env.DISCORD_WEBHOOK_URL_DK,
+  }
+  const webhookUrl = webhookMap[country] || process.env.DISCORD_WEBHOOK_URL
   if (!webhookUrl) return
   await fetch(webhookUrl, {
     method: 'POST',
@@ -185,17 +192,18 @@ async function main() {
       })
 
       const pokenzoUrl = `https://www.pokenzo.com/product/${listing.products?.slug}`
+      const listingCountry = listing.stores?.country
 
       if (!listing.in_stock && newInStock) {
-        await sendDiscordAlert(`🟢 **${productName}** (${storeLabel}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
+        await sendDiscordAlert(`🟢 **${productName}** (${storeLabel}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`, listingCountry)
       }
 
       if (listing.in_stock && !newInStock) {
-        await sendDiscordAlert(`🔴 **${productName}** (${storeLabel}) is now out of stock.\n${pokenzoUrl}`)
+        await sendDiscordAlert(`🔴 **${productName}** (${storeLabel}) is now out of stock.\n${pokenzoUrl}`, listingCountry)
       }
 
       if (listing.current_price && newPrice < listing.current_price) {
-        await sendDiscordAlert(`💰 Price drop on **${productName}** (${storeLabel}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`)
+        await sendDiscordAlert(`💰 Price drop on **${productName}** (${storeLabel}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`, listingCountry)
       }
 
       await supabase
