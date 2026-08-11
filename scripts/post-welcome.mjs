@@ -1,6 +1,6 @@
 import 'dotenv/config'
 
-const webhookUrl = process.env.DISCORD_WEBHOOK_URL
+const webhookUrl = process.env.DISCORD_WEBHOOK_URL_NO
 
 const message = `**Welcome to Pokenzo! 🎴**
 
