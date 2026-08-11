@@ -25,7 +25,15 @@ function parsePriceString(raw) {
   if (lastComma > lastDot) {
     cleaned = cleaned.replace(/\./g, '').replace(',', '.')
   } else if (lastDot > lastComma) {
-    cleaned = cleaned.replace(/,/g, '')
+    // A lone period followed by exactly 3 digits (and no comma anywhere) is
+    // almost certainly a thousands separator (e.g. "2.499" meaning 2499),
+    // not 2-decimal cents - real prices essentially never have 3 decimals.
+    const digitsAfterDot = cleaned.length - lastDot - 1
+    if (lastComma === -1 && digitsAfterDot === 3) {
+      cleaned = cleaned.replace(/\./g, '')
+    } else {
+      cleaned = cleaned.replace(/,/g, '')
+    }
   }
   const value = parseFloat(cleaned)
   return isNaN(value) ? null : value
@@ -161,20 +169,19 @@ async function main() {
         : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
 
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
+      const candidatePrice = metaPrice !== null ? metaPrice : extractPrice(relevantText)
       let newPrice = listing.current_price
-      if (metaPrice !== null) {
-        newPrice = metaPrice
-      } else {
-        const fallbackPrice = extractPrice(relevantText)
-        if (fallbackPrice !== null && listing.current_price) {
-          const percentChange = Math.abs(fallbackPrice - listing.current_price) / listing.current_price
+
+      if (candidatePrice !== null) {
+        if (listing.current_price) {
+          const percentChange = Math.abs(candidatePrice - listing.current_price) / listing.current_price
           if (percentChange > 0.7) {
-            console.warn(`Suspicious price change for ${storeName} - ${productName}: ${listing.current_price} → ${fallbackPrice}. Keeping old price.`)
+            console.warn(`Suspicious price change for ${storeName} - ${productName}: ${listing.current_price} → ${candidatePrice}. Keeping old price.`)
           } else {
-            newPrice = fallbackPrice
+            newPrice = candidatePrice
           }
-        } else if (fallbackPrice !== null) {
-          newPrice = fallbackPrice
+        } else {
+          newPrice = candidatePrice
         }
       }
 
