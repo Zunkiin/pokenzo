@@ -9,6 +9,7 @@ const categories = [
   { label: 'Elite Trainer Boxes', type: 'etb' },
   { label: 'Booster Bundles', type: 'booster_bundle' },
   { label: 'Collection Boxes', type: 'collection_box' },
+  { label: 'Tin Boxes', type: 'tin_box' },
 ]
 
 const languages = [
