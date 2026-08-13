@@ -10,7 +10,7 @@ const OUT_OF_STOCK_PHRASES = [
   'utsolgt', 'ikke på lager', 'ikke tilgjengelig',
   'slut i lager', 'slutsåld', 'ej i lager',
   'udsolgt', 'sold out', 'out of stock',
-  'kommer snart', 'coming soon', 'lagerbeholdning: 0'
+  'kommer snart', 'lagerbeholdning: 0'
 ]
 
 const END_MARKERS = [
@@ -160,7 +160,11 @@ async function main() {
   for (const listing of listings) {
     try {
       const res = await fetch(listing.product_url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' }
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'nb-NO,nb;q=0.9,en-US;q=0.8,en;q=0.7'
+        }
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
