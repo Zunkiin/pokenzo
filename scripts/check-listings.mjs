@@ -15,26 +15,37 @@ const OUT_OF_STOCK_PHRASES = [
 
 const END_MARKERS = [
   'anbefalte produkter', 'du liker kanskje også', 'related products',
-  'andre kunder ser også på', 'anbefalte tilbehør', 'anbefalt tilbehør', 'siste sett'
+  'andre kunder ser også på', 'anbefalte tilbehør', 'anbefalt tilbehør', 'siste sett',
+  'faq', 'you may also like', 'you might also like', 'frequently asked',
+  'andre købte', 'andre så også på', 'kunder som købte'
 ]
 
 function parsePriceString(raw) {
   let cleaned = raw.replace(/[^\d.,]/g, '')
   const lastDot = cleaned.lastIndexOf('.')
   const lastComma = cleaned.lastIndexOf(',')
-  if (lastComma > lastDot) {
-    cleaned = cleaned.replace(/\./g, '').replace(',', '.')
-  } else if (lastDot > lastComma) {
-    // A lone period followed by exactly 3 digits (and no comma anywhere) is
-    // almost certainly a thousands separator (e.g. "2.499" meaning 2499),
-    // not 2-decimal cents - real prices essentially never have 3 decimals.
-    const digitsAfterDot = cleaned.length - lastDot - 1
-    if (lastComma === -1 && digitsAfterDot === 3) {
-      cleaned = cleaned.replace(/\./g, '')
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    // Both separators present: whichever comes last is the real decimal separator.
+    if (lastComma > lastDot) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.')
     } else {
       cleaned = cleaned.replace(/,/g, '')
     }
+  } else if (lastComma !== -1 || lastDot !== -1) {
+    // Only one type of separator present. If it's followed by exactly 3
+    // digits, it's almost certainly a thousands separator (e.g. "2,299"
+    // or "2.299" meaning 2299) - real prices essentially never have 3
+    // decimal places, whether the separator is a comma or a period.
+    const sepIndex = lastComma !== -1 ? lastComma : lastDot
+    const digitsAfter = cleaned.length - sepIndex - 1
+    if (digitsAfter === 3) {
+      cleaned = cleaned.replace(/[.,]/g, '')
+    } else {
+      cleaned = cleaned.replace(',', '.')
+    }
   }
+
   const value = parseFloat(cleaned)
   return isNaN(value) ? null : value
 }
