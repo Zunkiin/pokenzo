@@ -149,7 +149,7 @@ async function main() {
   for (const listing of listings) {
     try {
       const res = await fetch(listing.product_url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PokenzoBot/1.0)' }
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' }
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
