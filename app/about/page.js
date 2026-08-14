@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'About | Pokenzo',
-  description: 'Learn about Pokenzo — a free Pokémon TCG price comparison tool for Scandinavia, built and maintained by a solo developer.',
+  description: 'Learn about Pokenzo, a free Pokémon TCG price comparison tool for Scandinavia, built and maintained by a solo developer.',
 }
 
 export default function AboutPage() {
@@ -19,14 +19,17 @@ export default function AboutPage() {
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 space-y-3">
           <h2 className="text-sm font-semibold text-[#E8A33D]">What we do</h2>
           <p className="text-sm text-[#C7C9D9] leading-relaxed">
-            Pokenzo automatically tracks prices and stock for Pokémon Trading Card Game products such as Booster Boxes, Elite Trainer Boxes, Packs, and Bundles across trusted stores in Norway, Sweden, and Denmark. Instead of checking five different shops yourself, Pokenzo checks them for you, every 30 minutes.
+            Pokenzo automatically tracks prices and stock for Pokémon Trading Card Game products, including booster boxes, Elite Trainer Boxes, packs, and bundles, across trusted stores in Norway, Sweden, and Denmark. Instead of checking five different shops yourself, Pokenzo checks them for you every 30 minutes.
+          </p>
+          <p className="text-sm text-[#C7C9D9] leading-relaxed">
+            Pokenzo is a price comparison tool only. We don't process orders, payments, or shipping. All purchases are made directly with the listed store, and any VAT, customs fees, or import charges are determined by that store and your local regulations, not by Pokenzo.
           </p>
         </div>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4 space-y-3">
           <h2 className="text-sm font-semibold text-[#4FA8A0]">Pokémon GO Community</h2>
           <p className="text-sm text-[#C7C9D9] leading-relaxed">
-            Alongside price tracking, Pokenzo hosts a community hub for Pokémon GO trainers coordinate raids, trade Pokémon, and connect with other trainers worldwide.
+            Alongside price tracking, Pokenzo hosts a community hub for Pokémon GO trainers. Coordinate raids, trade Pokémon, and connect with other trainers worldwide.
           </p>
         </div>
 
