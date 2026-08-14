@@ -31,7 +31,12 @@ function getCheapestPriceDisplay(product, country) {
     }
   }
 
-  if (country === 'ALL') return formatPrice(cheapest.nokPrice, 'NOK')
+  // Always show the cheapest listing's own real price/currency, not a
+  // converted number - a converted value doesn't match any actual price
+  // tag a user could pay, which looks confusing/wrong when multiple
+  // currencies are involved (NOK conversion is only used above to decide
+  // which listing is genuinely cheapest).
+  if (country === 'ALL') return formatPrice(cheapest.price, cheapest.currency)
   const targetCurrency = COUNTRY_CURRENCY[country]
   const converted = convertCurrency(cheapest.price, cheapest.currency, targetCurrency)
   return formatPrice(converted, targetCurrency)
@@ -51,6 +56,12 @@ export default function HeroCarousel({ products }) {
   useEffect(() => {
     const storedCountry = localStorage.getItem(COUNTRY_KEY)
     if (storedCountry) setCountry(storedCountry)
+
+    function handleCountryChange(e) {
+      setCountry(e.detail)
+    }
+    window.addEventListener('pokenzo-country-change', handleCountryChange)
+    return () => window.removeEventListener('pokenzo-country-change', handleCountryChange)
   }, [])
 
   useEffect(() => {
@@ -58,18 +69,24 @@ export default function HeroCarousel({ products }) {
     setIndex(0)
   }, [products])
 
+  const visibleProducts = shuffledProducts.filter((p) => getCheapestPriceDisplay(p, country) !== null)
+
   useEffect(() => {
     if (isDragging) return
-    if (shuffledProducts.length <= 1) return
+    if (visibleProducts.length <= 1) return
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % shuffledProducts.length)
+      setIndex((i) => (i + 1) % visibleProducts.length)
     }, 5500)
     return () => clearInterval(timer)
-  }, [shuffledProducts.length, isDragging])
+  }, [visibleProducts.length, isDragging])
 
-  if (!shuffledProducts || shuffledProducts.length === 0) return null
+  useEffect(() => {
+    setIndex(0)
+  }, [country])
 
-  const count = shuffledProducts.length
+  if (!visibleProducts || visibleProducts.length === 0) return null
+
+  const count = visibleProducts.length
 
   function handleTouchStart(e) {
     touchStartX.current = e.targetTouches[0].clientX
@@ -102,7 +119,7 @@ export default function HeroCarousel({ products }) {
 
   function handleClick() {
     if (hasMovedRef.current) return
-    router.push('/product/' + shuffledProducts[index].slug)
+    router.push('/product/' + visibleProducts[index].slug)
   }
 
   const trackStyle = {
@@ -122,7 +139,7 @@ export default function HeroCarousel({ products }) {
       className="relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer select-none"
     >
       <div style={trackStyle}>
-        {shuffledProducts.map((p) => (
+        {visibleProducts.map((p) => (
           <div key={p.id} style={{ width: 100 / count + '%' }} className="relative h-64 sm:h-80 flex-shrink-0">
             <img
               src={p.image_url}
@@ -149,8 +166,31 @@ export default function HeroCarousel({ products }) {
       </div>
 
       {count > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIndex((i) => (i - 1 + count) % count) }}
+            aria-label="Previous"
+            className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur text-white transition-colors z-10"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIndex((i) => (i + 1) % count) }}
+            aria-label="Next"
+            className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur text-white transition-colors z-10"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {count > 1 && (
         <div className="absolute top-3 right-3 flex gap-1">
-          {shuffledProducts.map((p, i) => (
+          {visibleProducts.map((p, i) => (
             <span
               key={p.id}
               className={'h-1.5 rounded-full transition-all ' + (i === index ? 'w-4 bg-[#E8A33D]' : 'w-1.5 bg-white/30')}
