@@ -42,6 +42,12 @@ function getCheapestPriceDisplay(product, country) {
   return formatPrice(converted, targetCurrency)
 }
 
+function getOtherCurrencies(product, shownDisplay) {
+  const shownCurrency = shownDisplay ? shownDisplay.split(' ').pop() : null
+  const inStock = (product.listings || []).filter((l) => l.in_stock)
+  return [...new Set(inStock.map((l) => l.currency))].filter((c) => c !== shownCurrency)
+}
+
 export default function HeroCarousel({ products }) {
   const router = useRouter()
   const [shuffledProducts, setShuffledProducts] = useState(products)
@@ -76,9 +82,9 @@ export default function HeroCarousel({ products }) {
     if (visibleProducts.length <= 1) return
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % visibleProducts.length)
-    }, 5500)
+    }, 7000)
     return () => clearInterval(timer)
-  }, [visibleProducts.length, isDragging])
+  }, [visibleProducts.length, isDragging, index])
 
   useEffect(() => {
     setIndex(0)
@@ -157,7 +163,12 @@ export default function HeroCarousel({ products }) {
               </h2>
               {getCheapestPriceDisplay(p, country) && (
                 <p className="text-sm text-[#C7C9D9] mt-1">
-                  Fra <span className="font-mono text-[#E8A33D] font-semibold">{getCheapestPriceDisplay(p, country)}</span>
+                  Starting at <span className="font-mono text-[#E8A33D] font-semibold">{getCheapestPriceDisplay(p, country)}</span>
+                </p>
+              )}
+              {country === 'ALL' && getOtherCurrencies(p, getCheapestPriceDisplay(p, country)).length > 0 && (
+                <p className="text-xs text-[#8A8C9C] mt-0.5">
+                  Also available in {getOtherCurrencies(p, getCheapestPriceDisplay(p, country)).join(', ')}
                 </p>
               )}
             </div>
