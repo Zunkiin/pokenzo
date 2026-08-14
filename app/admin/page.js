@@ -88,7 +88,7 @@ export default async function AdminPage() {
               <option value="etb">Elite Trainer Box</option>
               <option value="booster_bundle">Booster Bundle</option>
               <option value="collection_box">Collection Box</option>
-              <option value="tin_box">Tin Box</option>
+              <option value="tin">Tin</option>
             </select>
             <select name="language" required
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
@@ -106,10 +106,10 @@ export default async function AdminPage() {
             <textarea name="description" placeholder="Description (optional)" rows={3}
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
             <hr className="border-[#2A2C3D]" />
-            <select name="store_id" required
+            <select name="store_id" id="store_id_add" required
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
               {stores?.map((store) => (
-                <option key={store.id} value={store.id}>{store.name} ({store.country})</option>
+                <option key={store.id} value={store.id} data-country={store.country}>{store.name} ({store.country})</option>
               ))}
             </select>
             <input name="product_url" placeholder="Product page URL" required
@@ -117,7 +117,7 @@ export default async function AdminPage() {
             <div className="flex gap-3">
               <input name="price" type="number" step="0.01" placeholder="Price" required
                 className="flex-1 px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
-              <select name="currency" required
+              <select name="currency" id="currency_add" required
                 className="px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
                 <option value="NOK">NOK</option>
                 <option value="SEK">SEK</option>
@@ -144,10 +144,10 @@ export default async function AdminPage() {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <select name="store_id" required
+            <select name="store_id" id="store_id_listing" required
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
               {stores?.map((store) => (
-                <option key={store.id} value={store.id}>{store.name} ({store.country})</option>
+                <option key={store.id} value={store.id} data-country={store.country}>{store.name} ({store.country})</option>
               ))}
             </select>
             <input name="product_url" placeholder="Product page URL" required
@@ -155,7 +155,7 @@ export default async function AdminPage() {
             <div className="flex gap-3">
               <input name="price" type="number" step="0.01" placeholder="Price" required
                 className="flex-1 px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]" />
-              <select name="currency" required
+              <select name="currency" id="currency_listing" required
                 className="px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
                 <option value="NOK">NOK</option>
                 <option value="SEK">SEK</option>
@@ -222,6 +222,30 @@ export default async function AdminPage() {
           </div>
         </div>
       </div>
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var COUNTRY_TO_CURRENCY = { NO: 'NOK', SE: 'SEK', DK: 'DKK' };
+              function syncCurrency(storeSelectId, currencySelectId) {
+                var storeSelect = document.getElementById(storeSelectId);
+                var currencySelect = document.getElementById(currencySelectId);
+                if (!storeSelect || !currencySelect) return;
+                storeSelect.addEventListener('change', function() {
+                  var selectedOption = storeSelect.options[storeSelect.selectedIndex];
+                  var country = selectedOption ? selectedOption.getAttribute('data-country') : null;
+                  if (country && COUNTRY_TO_CURRENCY[country]) {
+                    currencySelect.value = COUNTRY_TO_CURRENCY[country];
+                  }
+                });
+              }
+              syncCurrency('store_id_add', 'currency_add');
+              syncCurrency('store_id_listing', 'currency_listing');
+            })();
+          `,
+        }}
+      />
     </main>
   )
 }
