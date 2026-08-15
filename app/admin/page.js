@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'
 import { loginAction, logoutAction, addStoreAction, addProductAction, addListingAction, deleteListingAction, updateListingAction } from './actions'
+import CurrencySync from '@/components/currency-sync'
 
 export default async function AdminPage() {
   const cookieStore = await cookies()
@@ -223,29 +224,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              var COUNTRY_TO_CURRENCY = { NO: 'NOK', SE: 'SEK', DK: 'DKK' };
-              function syncCurrency(storeSelectId, currencySelectId) {
-                var storeSelect = document.getElementById(storeSelectId);
-                var currencySelect = document.getElementById(currencySelectId);
-                if (!storeSelect || !currencySelect) return;
-                storeSelect.addEventListener('change', function() {
-                  var selectedOption = storeSelect.options[storeSelect.selectedIndex];
-                  var country = selectedOption ? selectedOption.getAttribute('data-country') : null;
-                  if (country && COUNTRY_TO_CURRENCY[country]) {
-                    currencySelect.value = COUNTRY_TO_CURRENCY[country];
-                  }
-                });
-              }
-              syncCurrency('store_id_add', 'currency_add');
-              syncCurrency('store_id_listing', 'currency_listing');
-            })();
-          `,
-        }}
-      />
+      <CurrencySync />
     </main>
   )
 }
