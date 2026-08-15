@@ -177,8 +177,12 @@ export default function ProductList({ products }) {
 
   const base = sortBy === 'random' ? randomOrder : products
   const enriched = base.map((p) => enrichProduct(p, country))
-  const availableOnly = country === 'ALL' ? enriched : enriched.filter((p) => p.cheapestPriceDisplay !== null)
-  const stockFiltered = inStockOnly ? availableOnly.filter((p) => p.cheapestPriceDisplay !== null) : availableOnly
+  // Country selection filters by relevance (does this country have a
+  // store for this product), regardless of stock status - the "In Stock"
+  // toggle is the single, consistent control for hiding out-of-stock
+  // products, whether "All" or a specific country is selected.
+  const countryFiltered = country === 'ALL' ? enriched : enriched.filter((p) => p.storeCount > 0)
+  const stockFiltered = inStockOnly ? countryFiltered.filter((p) => p.cheapestPriceDisplay !== null) : countryFiltered
 
   const filtered = stockFiltered.filter((p) => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean)
@@ -272,7 +276,7 @@ export default function ProductList({ products }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a product..."
+            placeholder="Search for a product or store..."
             className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
           />
           {query && (
@@ -357,9 +361,13 @@ export default function ProductList({ products }) {
                 ))}
               </div>
             ) : (
-              product.cheapestPriceDisplay && (
+              product.cheapestPriceDisplay ? (
                 <p className="font-mono text-sm font-semibold text-[#E8A33D] whitespace-nowrap">
                   {product.cheapestPriceDisplay}
+                </p>
+              ) : (
+                <p className="text-xs font-medium text-[#C1554A] whitespace-nowrap">
+                  Out of stock
                 </p>
               )
             )}
