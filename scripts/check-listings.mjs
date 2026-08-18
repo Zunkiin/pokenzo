@@ -13,6 +13,21 @@ const OUT_OF_STOCK_PHRASES = [
   'kommer snart', 'lagerbeholdning: 0'
 ]
 
+// A strong, explicit positive stock signal - if found anywhere in the
+// analyzed text, it takes priority over any OUT_OF_STOCK_PHRASES match.
+// This handles pages (like Rogerz's multi-variant products) where the raw
+// HTML contains stock text for more than one variant at once, and an
+// out-of-stock phrase for an unrelated variant would otherwise win just
+// because it happens to appear first in the text.
+const IN_STOCK_OVERRIDE_PHRASES = [
+  'ready to be shipped', 'klar til afsendelse', 'på lager', 'i lager'
+]
+
+// Stores whose stock status has proven to flip-flop rapidly - these get
+// the extra "confirm on two consecutive checks" treatment before alerting,
+// while all other stores alert immediately as before.
+const VOLATILE_STORES = ['Pokemons']
+
 const END_MARKERS = [
   'anbefalte produkter', 'du liker kanskje også', 'related products',
   'andre kunder ser også på', 'anbefalte tilbehør', 'anbefalt tilbehør', 'siste sett',
@@ -150,7 +165,7 @@ async function sendDiscordAlert(message, country) {
 async function main() {
   const { data: listings, error } = await supabase
   .from('listings')
-  .select('id, product_url, currency, current_price, in_stock, products(name, slug), stores(name, country)')
+  .select('id, product_url, currency, current_price, in_stock, pending_in_stock, products(name, slug), stores(name, country)')
 
   if (error) {
     console.error('Failed to fetch listings:', error.message)
@@ -187,9 +202,12 @@ async function main() {
       const cleanedText = relevantText.replace(/salg\s+utsolgt/gi, '')
 
       const metaAvailability = extractMetaAvailability(html)
+      const hasPositiveStockSignal = IN_STOCK_OVERRIDE_PHRASES.some((p) => cleanedText.includes(p))
       const newInStock = metaAvailability !== null
         ? metaAvailability
-        : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+        : hasPositiveStockSignal
+          ? true
+          : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
 
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
       const candidatePrice = metaPrice !== null ? metaPrice : extractPrice(relevantText)
@@ -215,6 +233,8 @@ async function main() {
 
       console.log(`[${storeName}] ${productName}: ${newInStock ? 'IN STOCK' : 'out of stock'} - ${newPrice} ${listing.currency}`)
 
+      // Always record what we actually observed, even if it's not yet
+      // "confirmed" - price_history should reflect raw reality.
       await supabase.from('price_history').insert({
         listing_id: listing.id,
         price: newPrice,
@@ -224,12 +244,37 @@ async function main() {
       const pokenzoUrl = `https://www.pokenzo.com/product/${listing.products?.slug}`
       const listingCountry = listing.stores?.country
 
-      if (!listing.in_stock && newInStock) {
-        await sendDiscordAlert(`🟢 **${productName}** (${storeLabel}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`, listingCountry)
-      }
+      let confirmedInStock = newInStock
+      let pendingInStock = null
 
-      if (listing.in_stock && !newInStock) {
-        await sendDiscordAlert(`🔴 **${productName}** (${storeLabel}) is now out of stock.\n${pokenzoUrl}`, listingCountry)
+      if (VOLATILE_STORES.includes(storeName)) {
+        // Only treat a stock-status change as real once it's been seen on
+        // two consecutive checks in a row - filters out fast flip-flops
+        // without ever hiding a change that actually sticks around.
+        confirmedInStock = listing.in_stock
+        pendingInStock = listing.pending_in_stock
+
+        if (newInStock === listing.in_stock) {
+          if (listing.pending_in_stock !== null) pendingInStock = null
+        } else if (listing.pending_in_stock === newInStock) {
+          confirmedInStock = newInStock
+          pendingInStock = null
+          if (newInStock) {
+            await sendDiscordAlert(`🟢 **${productName}** (${storeLabel}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`, listingCountry)
+          } else {
+            await sendDiscordAlert(`🔴 **${productName}** (${storeLabel}) is now out of stock.\n${pokenzoUrl}`, listingCountry)
+          }
+        } else {
+          pendingInStock = newInStock
+        }
+      } else {
+        // Normal stores: alert immediately on any change, as before.
+        if (!listing.in_stock && newInStock) {
+          await sendDiscordAlert(`🟢 **${productName}** (${storeLabel}) is back in stock! ${newPrice} ${listing.currency}\n${pokenzoUrl}`, listingCountry)
+        }
+        if (listing.in_stock && !newInStock) {
+          await sendDiscordAlert(`🔴 **${productName}** (${storeLabel}) is now out of stock.\n${pokenzoUrl}`, listingCountry)
+        }
       }
 
       if (listing.current_price && newPrice < listing.current_price) {
@@ -240,7 +285,8 @@ async function main() {
         .from('listings')
         .update({
           current_price: newPrice,
-          in_stock: newInStock,
+          in_stock: confirmedInStock,
+          pending_in_stock: pendingInStock,
           last_checked_at: new Date().toISOString()
         })
         .eq('id', listing.id)
