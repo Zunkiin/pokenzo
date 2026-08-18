@@ -19,8 +19,25 @@ const OUT_OF_STOCK_PHRASES = [
 // page). For those specific stores only, a strong positive phrase takes
 // priority over an OUT_OF_STOCK_PHRASES match. Scoped per-store (not
 // global) so it can't accidentally affect other stores' detection.
+// Stores whose stock text is known to be unreliable in raw HTML (e.g. it
+// only updates via client-side JavaScript we never run), with no positive
+// signal to fall back on either. Skip automatic stock-status changes for
+// these until a more reliable method (like a store JSON endpoint) is built.
+const SKIP_STOCK_UPDATES_FOR_STORES = ['Pokelageret']
+
 const IN_STOCK_OVERRIDE_BY_STORE = {
   Rogerz: ['på lager', 'ready to be shipped', 'klar til afsendelse'],
+}
+
+// Some stores show prices for multiple variants on the same page (Rogerz
+// shows both "Alm. moms" and "Brugtmoms" VAT-scheme variants). For those
+// stores, extract the specific variant's price by name instead of relying
+// on whichever price happens to appear first in the text.
+const PRICE_OVERRIDE_BY_STORE = {
+  Rogerz: (text) => {
+    const match = text.match(/alm\.?\s*moms\s*-?\s*([\d.,]+)/i)
+    return match ? parsePriceString(match[1]) : null
+  },
 }
 
 // Stores whose stock status has proven to flip-flop rapidly - these get
@@ -216,8 +233,10 @@ async function main() {
           : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
       }
 
+      const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
+      const overridePrice = priceOverrideFn ? priceOverrideFn(cleanedText) : null
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
-      const candidatePrice = metaPrice !== null ? metaPrice : extractPrice(relevantText)
+      const candidatePrice = overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText))
       let newPrice = listing.current_price
 
       if (candidatePrice !== null) {
@@ -254,7 +273,11 @@ async function main() {
       let confirmedInStock = newInStock
       let pendingInStock = null
 
-      if (VOLATILE_STORES.includes(storeName)) {
+      if (SKIP_STOCK_UPDATES_FOR_STORES.includes(storeName)) {
+        // Don't trust automatic stock detection for this store yet - keep
+        // whatever status is already in the database untouched.
+        confirmedInStock = listing.in_stock
+      } else if (VOLATILE_STORES.includes(storeName)) {
         // Only treat a stock-status change as real once it's been seen on
         // two consecutive checks in a row - filters out fast flip-flops
         // without ever hiding a change that actually sticks around.
