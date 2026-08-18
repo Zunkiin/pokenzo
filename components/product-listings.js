@@ -60,9 +60,9 @@ export default function ProductListings({ listings }) {
   const FLAGS = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
 
   function getAllCountryDisplays(listing) {
-    const shipsTo = listing.stores?.ships_to && listing.stores.ships_to.length > 0
-      ? listing.stores.ships_to
-      : (listing.stores ? [listing.stores.country] : [])
+    const shipsTo = listing.stores
+      ? [...new Set([listing.stores.country, ...(listing.stores.ships_to || [])])]
+      : []
 
     return shipsTo
       .filter((c) => COUNTRY_CURRENCY[c])
@@ -121,9 +121,9 @@ export default function ProductListings({ listings }) {
             ? 'text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-[#E8A33D] text-[#14151F]'
             : 'text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-[#2A2C3D] text-[#8A8C9C]'
           const storeName = listing.stores ? listing.stores.name : 'Unknown store'
-          const shipsTo = listing.stores?.ships_to && listing.stores.ships_to.length > 0
-            ? listing.stores.ships_to
-            : (listing.stores ? [listing.stores.country] : [])
+          const shipsTo = listing.stores
+            ? [...new Set([listing.stores.country, ...(listing.stores.ships_to || [])])]
+            : []
           const buttonText = listing.in_stock ? 'Buy at ' + storeName : 'Visit store'
 
           return (
