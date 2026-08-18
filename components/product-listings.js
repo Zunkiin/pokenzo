@@ -10,6 +10,29 @@ function formatCheckedAt(dateString) {
   return date.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
+function EstimatedBadge() {
+  const [show, setShow] = useState(false)
+  return (
+    <span className="relative inline-block mr-1 align-middle">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShow((s) => !s) }}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        aria-label="Estimated price"
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#C1554A]/20 text-[#C1554A] text-[10px] font-bold leading-none"
+      >
+        !
+      </button>
+      {show && (
+        <span className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-44 whitespace-normal text-[11px] font-sans font-normal normal-case text-[#EDEAE3] bg-[#1E2030] border border-[#2A2C3D] rounded-lg p-2 shadow-lg">
+          Estimated price, converted from the original currency at the current exchange rate.
+        </span>
+      )}
+    </span>
+  )
+}
+
 function getCountryBadgeClass(country) {
   if (country === 'SE') {
     return 'inline-block text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-[#006AA7] text-[#FECC02] mr-2 align-middle'
@@ -50,11 +73,11 @@ export default function ProductListings({ listings }) {
 
   function getDisplayPrice(listing) {
     if (country === 'ALL') {
-      return formatPrice(listing.current_price, listing.currency)
+      return { display: formatPrice(listing.current_price, listing.currency), isEstimated: false }
     }
     const targetCurrency = COUNTRY_CURRENCY[country]
     const converted = convertCurrency(listing.current_price, listing.currency, targetCurrency)
-    return formatPrice(converted, targetCurrency)
+    return { display: formatPrice(converted, targetCurrency), isEstimated: listing.currency !== targetCurrency }
   }
 
   const FLAGS = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
@@ -69,7 +92,7 @@ export default function ProductListings({ listings }) {
       .map((c) => {
         const targetCurrency = COUNTRY_CURRENCY[c]
         const converted = convertCurrency(listing.current_price, listing.currency, targetCurrency)
-        return { flag: FLAGS[c] || c, display: formatPrice(converted, targetCurrency) }
+        return { flag: FLAGS[c] || c, display: formatPrice(converted, targetCurrency), isEstimated: listing.currency !== targetCurrency }
       })
   }
 
@@ -100,7 +123,12 @@ export default function ProductListings({ listings }) {
 
       {sorted.length > 0 && (
         <p className="text-sm text-[#8A8C9C] mb-4">
-          From <span className="text-[#E8A33D] font-mono text-base font-semibold">{getDisplayPrice(sorted[0])}</span> at {sorted.length} {sorted.length === 1 ? 'store' : 'stores'}
+          From <span className="text-[#E8A33D] font-mono text-base font-semibold">
+            {getDisplayPrice(sorted[0]).isEstimated && (
+              <EstimatedBadge />
+            )}
+            {getDisplayPrice(sorted[0]).display}
+          </span> at {sorted.length} {sorted.length === 1 ? 'store' : 'stores'}
         </p>
       )}
 
@@ -155,13 +183,19 @@ export default function ProductListings({ listings }) {
                   <div className="text-right flex-shrink-0">
                     {getAllCountryDisplays(listing).map((p, i) => (
                       <p key={i} className="font-mono text-sm font-semibold whitespace-nowrap">
+                        {p.isEstimated && (
+                          <EstimatedBadge />
+                        )}
                         {p.flag} {p.display}
                       </p>
                     ))}
                   </div>
                 ) : (
                   <p className="font-mono text-lg font-semibold whitespace-nowrap">
-                    {getDisplayPrice(listing)}
+                    {getDisplayPrice(listing).isEstimated && (
+                      <EstimatedBadge />
+                    )}
+                    {getDisplayPrice(listing).display}
                   </p>
                 )}
               </div>
