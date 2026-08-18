@@ -49,7 +49,7 @@ const END_MARKERS = [
   'anbefalte produkter', 'du liker kanskje også', 'related products',
   'andre kunder ser også på', 'anbefalte tilbehør', 'anbefalt tilbehør', 'siste sett',
   'faq', 'you may also like', 'you might also like', 'frequently asked',
-  'andre købte', 'andre så også på', 'kunder som købte'
+  'andre købte', 'andre så også på', 'kunder som købte', 'andre forslag til deg'
 ]
 
 function parsePriceString(raw) {
