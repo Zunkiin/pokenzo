@@ -25,7 +25,7 @@ function EstimatedBadge() {
         !
       </button>
       {show && (
-        <span className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-44 whitespace-normal text-[11px] font-sans font-normal normal-case text-[#EDEAE3] bg-[#1E2030] border border-[#2A2C3D] rounded-lg p-2 shadow-lg">
+        <span className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-44 whitespace-normal text-center text-[11px] font-sans font-normal normal-case text-[#EDEAE3] bg-[#1E2030] border border-[#2A2C3D] rounded-lg p-2 shadow-lg">
           Estimated price, converted from the original currency at the current exchange rate.
         </span>
       )}
