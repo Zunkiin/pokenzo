@@ -13,16 +13,6 @@ const OUT_OF_STOCK_PHRASES = [
   'kommer snart', 'lagerbeholdning: 0'
 ]
 
-// A strong, explicit positive stock signal - if found anywhere in the
-// analyzed text, it takes priority over any OUT_OF_STOCK_PHRASES match.
-// This handles pages (like Rogerz's multi-variant products) where the raw
-// HTML contains stock text for more than one variant at once, and an
-// out-of-stock phrase for an unrelated variant would otherwise win just
-// because it happens to appear first in the text.
-const IN_STOCK_OVERRIDE_PHRASES = [
-  'ready to be shipped', 'klar til afsendelse', 'på lager', 'i lager'
-]
-
 // Stores whose stock status has proven to flip-flop rapidly - these get
 // the extra "confirm on two consecutive checks" treatment before alerting,
 // while all other stores alert immediately as before.
@@ -202,12 +192,9 @@ async function main() {
       const cleanedText = relevantText.replace(/salg\s+utsolgt/gi, '')
 
       const metaAvailability = extractMetaAvailability(html)
-      const hasPositiveStockSignal = IN_STOCK_OVERRIDE_PHRASES.some((p) => cleanedText.includes(p))
       const newInStock = metaAvailability !== null
         ? metaAvailability
-        : hasPositiveStockSignal
-          ? true
-          : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+        : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
 
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
       const candidatePrice = metaPrice !== null ? metaPrice : extractPrice(relevantText)
