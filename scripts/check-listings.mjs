@@ -13,6 +13,16 @@ const OUT_OF_STOCK_PHRASES = [
   'kommer snart', 'lagerbeholdning: 0'
 ]
 
+// Some stores' product pages contain stock text for MORE than one variant
+// at once in the raw HTML (e.g. Rogerz shows both "Out of stock" and "in
+// stock, ready to be shipped" for two different price variants on the same
+// page). For those specific stores only, a strong positive phrase takes
+// priority over an OUT_OF_STOCK_PHRASES match. Scoped per-store (not
+// global) so it can't accidentally affect other stores' detection.
+const IN_STOCK_OVERRIDE_BY_STORE = {
+  Rogerz: ['på lager', 'ready to be shipped', 'klar til afsendelse'],
+}
+
 // Stores whose stock status has proven to flip-flop rapidly - these get
 // the extra "confirm on two consecutive checks" treatment before alerting,
 // while all other stores alert immediately as before.
@@ -191,10 +201,20 @@ async function main() {
       const relevantText = getRelevantSection(fullText, productName)
       const cleanedText = relevantText.replace(/salg\s+utsolgt/gi, '')
 
-      const metaAvailability = extractMetaAvailability(html)
-      const newInStock = metaAvailability !== null
-        ? metaAvailability
-        : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+      const overridePhrases = IN_STOCK_OVERRIDE_BY_STORE[storeName]
+      let newInStock
+      if (overridePhrases) {
+        // This store's availability meta tag can be unreliable (it may only
+        // reflect one of several variants on the page), so skip it entirely
+        // and rely on text detection, where a strong positive phrase wins.
+        const hasPositiveStockSignal = overridePhrases.some((p) => cleanedText.includes(p))
+        newInStock = hasPositiveStockSignal ? true : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+      } else {
+        const metaAvailability = extractMetaAvailability(html)
+        newInStock = metaAvailability !== null
+          ? metaAvailability
+          : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+      }
 
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
       const candidatePrice = metaPrice !== null ? metaPrice : extractPrice(relevantText)
