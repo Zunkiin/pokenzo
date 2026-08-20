@@ -25,6 +25,11 @@ const OUT_OF_STOCK_PHRASES = [
 // these until a more reliable method (like a store JSON endpoint) is built.
 const SKIP_STOCK_UPDATES_FOR_STORES = ['Pokelageret']
 
+// Stores whose availability meta tag has proven unreliable (doesn't match
+// the actual visible stock text on the page). For these, skip the meta
+// tag and rely purely on the OUT_OF_STOCK_PHRASES text check instead.
+const SKIP_META_AVAILABILITY_FOR_STORES = ['Maxgaming NO', 'Maxgaming SE', 'Maxgaming DK']
+
 const IN_STOCK_OVERRIDE_BY_STORE = {
   Rogerz: ['på lager', 'ready to be shipped', 'klar til afsendelse'],
 }
@@ -220,7 +225,11 @@ async function main() {
 
       const overridePhrases = IN_STOCK_OVERRIDE_BY_STORE[storeName]
       let newInStock
-      if (overridePhrases) {
+      if (SKIP_META_AVAILABILITY_FOR_STORES.includes(storeName)) {
+        // Meta tag is unreliable for this store - rely purely on the
+        // visible text, which has been confirmed accurate.
+        newInStock = !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+      } else if (overridePhrases) {
         // This store's availability meta tag can be unreliable (it may only
         // reflect one of several variants on the page), so skip it entirely
         // and rely on text detection, where a strong positive phrase wins.
