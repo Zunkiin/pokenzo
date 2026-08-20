@@ -6,6 +6,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+// Set DRY_RUN=true to log what the bot WOULD do (alerts, price/stock
+// updates) without actually sending Discord messages or writing to the
+// database - safe way to test a change before it runs for real.
+const DRY_RUN = process.env.DRY_RUN === 'true'
+if (DRY_RUN) {
+  console.log('=== DRY RUN MODE: no Discord alerts will be sent, no database writes will happen ===')
+}
+
 const OUT_OF_STOCK_PHRASES = [
   'utsolgt', 'ikke på lager', 'ikke tilgjengelig',
   'slut i lager', 'slutsåld', 'ej i lager',
@@ -28,7 +36,7 @@ const SKIP_STOCK_UPDATES_FOR_STORES = ['Pokelageret']
 // Stores whose availability meta tag has proven unreliable (doesn't match
 // the actual visible stock text on the page). For these, skip the meta
 // tag and rely purely on the OUT_OF_STOCK_PHRASES text check instead.
-const SKIP_META_AVAILABILITY_FOR_STORES = ['Maxgaming NO', 'Maxgaming SE', 'Maxgaming DK']
+const SKIP_META_AVAILABILITY_FOR_STORES = []
 
 const IN_STOCK_OVERRIDE_BY_STORE = {
   Rogerz: ['på lager', 'ready to be shipped', 'klar til afsendelse'],
@@ -167,7 +175,40 @@ function extractMetaAvailability(html) {
   return null
 }
 
+// Many stores embed structured Schema.org product data (JSON-LD) for SEO,
+// containing an explicit, machine-readable availability field. Since our
+// stripHtml() removes <script> tags entirely, this data would otherwise
+// be discarded before we ever see it. Checked before falling back to
+// meta tags or fragile visible-text matching. Wrapped defensively - any
+// parsing failure just falls through to the existing detection methods.
+function extractJsonLdAvailability(html) {
+  const scriptBlocks = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || []
+  for (const block of scriptBlocks) {
+    const jsonMatch = block.match(/>([\s\S]*?)<\/script>/i)
+    if (!jsonMatch) continue
+    try {
+      const data = JSON.parse(jsonMatch[1])
+      const candidates = Array.isArray(data) ? data : [data, ...(data['@graph'] || [])]
+      for (const item of candidates) {
+        const offers = item?.offers
+        const availability = (Array.isArray(offers) ? offers[0]?.availability : offers?.availability) ?? item?.availability
+        if (typeof availability === 'string') {
+          if (availability.includes('InStock')) return true
+          if (availability.includes('OutOfStock')) return false
+        }
+      }
+    } catch (e) {
+      // Malformed or unexpected JSON-LD - ignore and fall through.
+    }
+  }
+  return null
+}
+
 async function sendDiscordAlert(message, country) {
+  if (DRY_RUN) {
+    console.log(`[DRY RUN] Would send Discord alert to ${country || 'fallback'}:\n${message}`)
+    return
+  }
   // Route each alert to the Discord channel matching the store's country,
   // so #alerts channels can be split per country instead of one shared feed.
   const webhookMap = {
@@ -236,10 +277,13 @@ async function main() {
         const hasPositiveStockSignal = overridePhrases.some((p) => cleanedText.includes(p))
         newInStock = hasPositiveStockSignal ? true : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
       } else {
-        const metaAvailability = extractMetaAvailability(html)
-        newInStock = metaAvailability !== null
-          ? metaAvailability
-          : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+        const jsonLdAvailability = extractJsonLdAvailability(html)
+        const metaAvailability = jsonLdAvailability !== null ? null : extractMetaAvailability(html)
+        newInStock = jsonLdAvailability !== null
+          ? jsonLdAvailability
+          : metaAvailability !== null
+            ? metaAvailability
+            : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
       }
 
       const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
@@ -270,11 +314,13 @@ async function main() {
 
       // Always record what we actually observed, even if it's not yet
       // "confirmed" - price_history should reflect raw reality.
-      await supabase.from('price_history').insert({
-        listing_id: listing.id,
-        price: newPrice,
-        in_stock: newInStock
-      })
+      if (!DRY_RUN) {
+        await supabase.from('price_history').insert({
+          listing_id: listing.id,
+          price: newPrice,
+          in_stock: newInStock
+        })
+      }
 
       const pokenzoUrl = `https://www.pokenzo.com/product/${listing.products?.slug}`
       const listingCountry = listing.stores?.country
@@ -320,15 +366,19 @@ async function main() {
         await sendDiscordAlert(`💰 Price drop on **${productName}** (${storeLabel}): ${listing.current_price} → ${newPrice} ${listing.currency}\n${pokenzoUrl}`, listingCountry)
       }
 
-      await supabase
-        .from('listings')
-        .update({
-          current_price: newPrice,
-          in_stock: confirmedInStock,
-          pending_in_stock: pendingInStock,
-          last_checked_at: new Date().toISOString()
-        })
-        .eq('id', listing.id)
+      if (DRY_RUN) {
+        console.log(`[DRY RUN] Would update listing ${listing.id}: current_price=${newPrice}, in_stock=${confirmedInStock}, pending_in_stock=${pendingInStock}`)
+      } else {
+        await supabase
+          .from('listings')
+          .update({
+            current_price: newPrice,
+            in_stock: confirmedInStock,
+            pending_in_stock: pendingInStock,
+            last_checked_at: new Date().toISOString()
+          })
+          .eq('id', listing.id)
+      }
 
     } catch (err) {
       console.error(`Error checking listing ${listing.id}:`, err.message)
