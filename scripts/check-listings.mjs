@@ -168,7 +168,8 @@ function extractMetaAvailability(html) {
     if (!isAvailabilityTag) continue
     const contentMatch = tag.match(/content=["']([^"']+)["']/i)
     if (!contentMatch) continue
-    const value = contentMatch[1].toLowerCase()
+    const value = contentMatch[1].toLowerCase().trim()
+    if (value === 'oos') return false
     if (value.includes('instock') || value.includes('in stock')) return true
     if (value.includes('outofstock') || value.includes('out of stock')) return false
   }
@@ -277,12 +278,12 @@ async function main() {
         const hasPositiveStockSignal = overridePhrases.some((p) => cleanedText.includes(p))
         newInStock = hasPositiveStockSignal ? true : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
       } else {
-        const jsonLdAvailability = extractJsonLdAvailability(html)
-        const metaAvailability = jsonLdAvailability !== null ? null : extractMetaAvailability(html)
-        newInStock = jsonLdAvailability !== null
-          ? jsonLdAvailability
-          : metaAvailability !== null
-            ? metaAvailability
+        const metaAvailability = extractMetaAvailability(html)
+        const jsonLdAvailability = metaAvailability !== null ? null : extractJsonLdAvailability(html)
+        newInStock = metaAvailability !== null
+          ? metaAvailability
+          : jsonLdAvailability !== null
+            ? jsonLdAvailability
             : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
       }
 
