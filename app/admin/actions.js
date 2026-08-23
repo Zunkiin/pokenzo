@@ -100,6 +100,7 @@ export async function addListingAction(formData) {
 export async function deleteListingAction(formData) {
   const supabase = getSupabaseAdmin()
   const listingId = formData.get('listing_id')
+  const productId = formData.get('product_id')
 
   // price_history rows reference this listing via a foreign key, so they
   // must be deleted first or the listing delete will silently fail.
@@ -118,7 +119,9 @@ export async function deleteListingAction(formData) {
     throw new Error('Failed to delete listing: ' + error.message)
   }
 
-  redirect('/admin')
+  // If deleted from a product's edit page, stay on that page instead of
+  // being sent back to the main admin page.
+  redirect(productId ? `/admin/edit/${productId}` : '/admin')
 }
 
 export async function updateProductAction(formData) {

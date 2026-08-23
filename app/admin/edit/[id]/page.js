@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { updateProductAction, updateListingAction } from '../../actions'
+import { updateProductAction, updateListingAction, deleteListingAction } from '../../actions'
 import Link from 'next/link'
 
 export default async function EditProductPage({ params }) {
@@ -45,7 +45,7 @@ export default async function EditProductPage({ params }) {
               <option value="etb">Elite Trainer Box</option>
               <option value="booster_bundle">Booster Bundle</option>
               <option value="collection_box">Collection Box</option>
-              <option value="tin_box">Tin Box</option>
+              <option value="tin">Tin</option>
             </select>
             <select name="language" defaultValue={product.language} required
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
@@ -107,6 +107,13 @@ export default async function EditProductPage({ params }) {
                       Save
                     </button>
                   </div>
+                </form>
+                <form action={deleteListingAction} className="mt-2">
+                  <input type="hidden" name="listing_id" value={listing.id} />
+                  <input type="hidden" name="product_id" value={product.id} />
+                  <button type="submit" className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[#C1554A]/15 border border-[#C1554A] text-[#C1554A] hover:bg-[#C1554A]/25">
+                    Delete listing
+                  </button>
                 </form>
               </div>
             ))}
