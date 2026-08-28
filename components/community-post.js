@@ -16,6 +16,7 @@ export default function CommunityPost() {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [heartPop, setHeartPop] = useState(false)
 
   async function loadPost() {
   const { data: userData } = await supabaseClient.auth.getUser()
@@ -106,6 +107,15 @@ export default function CommunityPost() {
     await loadPost()
   }
 
+  function handleDoubleClickLike() {
+    if (!user) return
+    if (!iLiked) {
+      handleToggleLike()
+    }
+    setHeartPop(true)
+    setTimeout(() => setHeartPop(false), 700)
+  }
+
   async function handlePostComment() {
     if (!commentInput.trim() || !user) return
     await supabaseClient.from('message_comments').insert({
@@ -148,7 +158,7 @@ async function handleDeletePost() {
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
-        <p className="text-sm text-[#8A8C9C]">Loading...</p>
+        <img src="/logo.png" alt="Loading" className="w-16 h-16 animate-spin" style={{ animationDuration: '1.5s' }} />
       </main>
     )
   }
@@ -164,8 +174,8 @@ async function handleDeletePost() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-4">
-        <Link href="/pokemon-go/community-chat" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back to Community Chat</span>
+        <Link href="/pokemon-go/community-chat" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#C7C9D9] bg-[#1E2030] border border-[#2A2C3D] rounded-lg px-3 py-1.5 hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors">
+          <ArrowLeft size={18} strokeWidth={2.5} /> Back to Community Chat
         </Link>
 
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
@@ -187,10 +197,17 @@ async function handleDeletePost() {
               {new Date(message.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
-          {message.message && <p className="text-sm text-[#EDEAE3] mb-2">{message.message}</p>}
-          {message.image_url && (
-            <img src={message.image_url} alt="" className="w-full rounded-lg mb-2" onError={(e) => e.target.style.display = 'none'} />
-          )}
+          <div onDoubleClick={handleDoubleClickLike} className="relative cursor-pointer">
+            {heartPop && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <span className="text-6xl animate-ping" style={{ animationDuration: '0.7s', animationIterationCount: 1 }}>❤️</span>
+              </div>
+            )}
+            {message.message && <p className="text-sm text-[#EDEAE3] mb-2">{message.message}</p>}
+            {message.image_url && (
+              <img src={message.image_url} alt="" className="w-full rounded-lg mb-2" onError={(e) => e.target.style.display = 'none'} />
+            )}
+          </div>
           <div className="flex items-center gap-4 text-xs">
             <button
                 onClick={handleToggleLike}

@@ -1,11 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import PokemonGoNav from '@/components/pokemon-go-nav'
 import { containsLink } from '@/lib/contentFilters'
 import CommunityNav from '@/components/community-nav'
+import PostCard from '@/components/community-post-card'
+import CommunityRandomTab from '@/components/community-random-tab'
 import { ArrowLeft } from 'lucide-react'
 
 export default function CommunityPage() {
@@ -24,6 +26,34 @@ export default function CommunityPage() {
   const [expandedComments, setExpandedComments] = useState({})
   const [isAdmin, setIsAdmin] = useState(false)
   const [copiedId, setCopiedId] = useState(null)
+  const [visibleCount, setVisibleCount] = useState(6)
+  const [viewMode, setViewMode] = useState('feed')
+  const [heartPopId, setHeartPopId] = useState(null)
+  const clickTimeoutRef = useRef(null)
+
+  function handleContentClick(msg) {
+    if (clickTimeoutRef.current) {
+      // Second click arrived quickly - this is a double-click, handled below.
+      return
+    }
+    clickTimeoutRef.current = setTimeout(() => {
+      router.push(`/pokemon-go/community-chat/${msg.id}`)
+      clickTimeoutRef.current = null
+    }, 250)
+  }
+
+  function handleContentDoubleClick(msg) {
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current)
+      clickTimeoutRef.current = null
+    }
+    if (!user) return
+    if (!msg.iLiked) {
+      handleToggleLike(msg.id, msg.iLiked)
+    }
+    setHeartPopId(msg.id)
+    setTimeout(() => setHeartPopId(null), 700)
+  }
 
   async function loadMessages(userId) {
     const { data: msgs } = await supabaseClient
@@ -38,56 +68,45 @@ export default function CommunityPage() {
     const blockedSet = (blocks || []).map((b) => b.blocked_id)
 
     const visible = (msgs || []).filter((m) => !blockedSet.includes(m.user_id))
+    const messageIds = visible.map((m) => m.id)
 
-    const withExtras = await Promise.all(
-      visible.map(async (m) => {
-        const { count: likeCount } = await supabaseClient
-          .from('message_likes')
-          .select('id', { count: 'exact', head: true })
-          .eq('message_id', m.id)
+    if (messageIds.length === 0) {
+      setMessages([])
+      return
+    }
 
-        let iLiked = false
-        if (userId) {
-          const { data: myLike } = await supabaseClient
-            .from('message_likes')
-            .select('id')
-            .eq('message_id', m.id)
-            .eq('user_id', userId)
-            .maybeSingle()
-          iLiked = !!myLike
-        }
+    // Fetch ALL likes/comments for every visible message in a small, fixed
+    // number of bulk queries - instead of looping per message (and per
+    // comment) and firing a separate query for each one, which was
+    // producing hundreds of round-trips and made the page painfully slow.
+    const [{ data: allLikes }, { data: allComments }] = await Promise.all([
+      supabaseClient.from('message_likes').select('message_id, user_id').in('message_id', messageIds),
+      supabaseClient
+        .from('message_comments')
+        .select('id, message_id, comment, user_id, created_at, profiles(username)')
+        .in('message_id', messageIds)
+        .order('created_at', { ascending: true }),
+    ])
 
-        const { data: comments } = await supabaseClient
-          .from('message_comments')
-          .select('id, comment, user_id, created_at, profiles(username)')
-          .eq('message_id', m.id)
-          .order('created_at', { ascending: true })
+    const commentIds = (allComments || []).map((c) => c.id)
+    const { data: allCommentLikes } = commentIds.length > 0
+      ? await supabaseClient.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds)
+      : { data: [] }
 
-        const commentsWithLikes = await Promise.all(
-          (comments || []).map(async (c) => {
-            const { count: cLikeCount } = await supabaseClient
-              .from('comment_likes')
-              .select('id', { count: 'exact', head: true })
-              .eq('comment_id', c.id)
+    const withExtras = visible.map((m) => {
+      const messageLikes = (allLikes || []).filter((l) => l.message_id === m.id)
+      const iLiked = userId ? messageLikes.some((l) => l.user_id === userId) : false
 
-            let cLiked = false
-            if (userId) {
-              const { data: myCLike } = await supabaseClient
-                .from('comment_likes')
-                .select('id')
-                .eq('comment_id', c.id)
-                .eq('user_id', userId)
-                .maybeSingle()
-              cLiked = !!myCLike
-            }
+      const comments = (allComments || [])
+        .filter((c) => c.message_id === m.id)
+        .map((c) => {
+          const cLikes = (allCommentLikes || []).filter((cl) => cl.comment_id === c.id)
+          const cLiked = userId ? cLikes.some((cl) => cl.user_id === userId) : false
+          return { ...c, likeCount: cLikes.length, iLiked: cLiked }
+        })
 
-            return { ...c, likeCount: cLikeCount || 0, iLiked: cLiked }
-          })
-        )
-
-        return { ...m, likeCount: likeCount || 0, iLiked, comments: commentsWithLikes }
-      })
-    )
+      return { ...m, likeCount: messageLikes.length, iLiked, comments }
+    })
 
     setMessages(withExtras)
   }
@@ -287,10 +306,35 @@ export default function CommunityPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  function getCardProps(msg) {
+    return {
+      user,
+      isAdmin,
+      isGuest,
+      reportedIds,
+      copiedId,
+      expanded: !!expandedComments[msg.id],
+      commentInput: commentInputs[msg.id],
+      onContentClick: () => handleContentClick(msg),
+      onContentDoubleClick: () => handleContentDoubleClick(msg),
+      heartPop: heartPopId === msg.id,
+      onToggleLike: handleToggleLike,
+      onToggleExpanded: (id) => setExpandedComments((prev) => ({ ...prev, [id]: !prev[id] })),
+      onShare: handleShare,
+      onDelete: handleDelete,
+      onReport: handleReport,
+      onBlock: handleBlock,
+      onToggleCommentLike: handleToggleCommentLike,
+      onDeleteComment: handleDeleteComment,
+      onCommentInputChange: (id, value) => setCommentInputs((prev) => ({ ...prev, [id]: value })),
+      onPostComment: handlePostComment,
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center">
-        <p className="text-sm text-[#8A8C9C]">Loading...</p>
+        <img src="/logo.png" alt="Loading" className="w-16 h-16 animate-spin" style={{ animationDuration: '1.5s' }} />
       </main>
     )
   }
@@ -298,8 +342,8 @@ export default function CommunityPage() {
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-16 pb-16">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/pokemon-go" className="text-sm text-[#8A8C9C] hover:text-[#E8A33D]">
-          <span className="inline-flex items-center gap-1"><ArrowLeft size={16} strokeWidth={2.5} /> Back</span>
+        <Link href="/pokemon-go" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#C7C9D9] bg-[#1E2030] border border-[#2A2C3D] rounded-lg px-3 py-1.5 hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors">
+          <ArrowLeft size={18} strokeWidth={2.5} /> Back
         </Link>
 
         <h1 className="text-xl font-semibold">Community Chat</h1>
@@ -352,128 +396,52 @@ export default function CommunityPage() {
           </p>
         )}
 
-        <div className="space-y-3">
-          {messages.length === 0 && (
-            <p className="text-sm text-[#8A8C9C]">No posts yet. Be the first to share!</p>
-          )}
-          {messages.map((msg) => (
-            <div key={msg.id} className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-4">
-              <div
-                onClick={() => router.push(`/pokemon-go/community-chat/${msg.id}`)}
-                className="cursor-pointer"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Link
-                    href={`/pokemon-go/${msg.profiles?.username}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1.5 text-xs font-medium text-[#4FA8A0] hover:underline"
-                  >
-                    {(msg.profiles?.avatar_trainer_url || msg.profiles?.avatar_pokemon_url) && (
-                      <div className="flex items-center -space-x-1">
-                        {msg.profiles?.avatar_trainer_url && (
-                          <img src={msg.profiles.avatar_trainer_url} alt="" className="w-8 h-8 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                        )}
-                        {msg.profiles?.avatar_pokemon_url && (
-                          <img src={msg.profiles.avatar_pokemon_url} alt="" className="w-6 h-6 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                        )}
-                      </div>
-                    )}
-                    {msg.profiles?.username}
-                  </Link>
-                  <span className="text-[10px] text-[#5C5E70]">
-                    {new Date(msg.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                {msg.message && <p className="text-sm text-[#EDEAE3] mb-2">{msg.message}</p>}
-                {msg.image_url && (
-                  <img src={msg.image_url} alt="" className="w-full rounded-lg mb-2" onError={(e) => e.target.style.display = 'none'} />
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 text-xs mb-2">
-                <button
-                  onClick={() => user && handleToggleLike(msg.id, msg.iLiked)}
-                  disabled={!user}
-                  className={msg.iLiked ? 'text-[#E8A33D] font-semibold' : 'text-[#8A8C9C]'}
-                >
-                  {msg.iLiked ? '❤️' : '🤍'} {msg.likeCount}
-                </button>
-                <button
-                  onClick={() => setExpandedComments((prev) => ({ ...prev, [msg.id]: !prev[msg.id] }))}
-                  className="text-[#8A8C9C]"
-                >
-                  💬 {msg.comments.length}
-                </button>
-                <button onClick={() => handleShare(msg.id)} className="text-[#8A8C9C] hover:text-[#4FA8A0]">
-                  {copiedId === msg.id ? '✓ Copied' : '🔗 Share'}
-                </button>
-                {user && (
-                  msg.user_id === user.id || isAdmin ? (
-                    <button onClick={() => handleDelete(msg.id)} className="text-[#C1554A] hover:text-[#E8836F] ml-auto">
-                      Delete{isAdmin && msg.user_id !== user.id ? ' (admin)' : ''}
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleReport(msg.id)}
-                        disabled={reportedIds.includes(msg.id)}
-                        className="text-[#8A8C9C] hover:text-[#E8A33D] disabled:opacity-50 ml-auto"
-                      >
-                        {reportedIds.includes(msg.id) ? 'Reported' : 'Report'}
-                      </button>
-                      <button onClick={() => handleBlock(msg.user_id)} className="text-[#8A8C9C] hover:text-[#C1554A]">
-                        Block
-                      </button>
-                    </>
-                  )
-                )}
-              </div>
-
-              {expandedComments[msg.id] && (
-                <div className="border-t border-[#2A2C3D] pt-2 space-y-2">
-                  {msg.comments.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between text-xs">
-                      <div>
-                        <span className="font-semibold text-[#4FA8A0]">{c.profiles?.username}: </span>
-                        <span className="text-[#C7C9D9]">{c.comment}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <button
-                          onClick={() => user && handleToggleCommentLike(c.id, c.iLiked)}
-                          disabled={!user}
-                          className={c.iLiked ? 'text-[#E8A33D]' : 'text-[#5C5E70]'}
-                        >
-                          {c.iLiked ? '❤️' : '🤍'} {c.likeCount}
-                        </button>
-                        {user && (c.user_id === user.id || isAdmin) && (
-                          <button onClick={() => handleDeleteComment(c.id)} className="text-[#C1554A] hover:text-[#E8836F]">
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {user && !isGuest && (
-                    <div className="flex gap-2 mt-2">
-                      <input
-                        value={commentInputs[msg.id] || ''}
-                        onChange={(e) => setCommentInputs((prev) => ({ ...prev, [msg.id]: e.target.value }))}
-                        placeholder="Write a comment..."
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-xs placeholder-[#5C5E70] focus:outline-none focus:border-[#E8A33D]"
-                      />
-                      <button
-                        onClick={() => handlePostComment(msg.id)}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[#E8A33D] text-[#14151F]"
-                      >
-                        Send
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="flex gap-2 mb-1">
+          <button
+            onClick={() => setViewMode('feed')}
+            className={
+              viewMode === 'feed'
+                ? 'text-xs font-semibold px-3 py-2 rounded-full bg-[#E8A33D] text-[#14151F]'
+                : 'text-xs font-medium px-3 py-2 rounded-full border border-[#4A4D67] bg-[#1E2030] text-[#C7C9D9] hover:border-[#E8A33D] hover:text-[#E8A33D]'
+            }
+          >
+            Feed
+          </button>
+          <button
+            onClick={() => setViewMode('random')}
+            className={
+              viewMode === 'random'
+                ? 'text-xs font-semibold px-3 py-2 rounded-full bg-[#E8A33D] text-[#14151F]'
+                : 'text-xs font-medium px-3 py-2 rounded-full border border-[#4A4D67] bg-[#1E2030] text-[#C7C9D9] hover:border-[#E8A33D] hover:text-[#E8A33D]'
+            }
+          >
+            🔀 Random
+          </button>
         </div>
+
+        {viewMode === 'feed' ? (
+          <>
+            <div className="space-y-3">
+              {messages.length === 0 && (
+                <p className="text-sm text-[#8A8C9C]">No posts yet. Be the first to share!</p>
+              )}
+              {messages.slice(0, visibleCount).map((msg) => (
+                <PostCard key={msg.id} msg={msg} {...getCardProps(msg)} />
+              ))}
+            </div>
+
+            {visibleCount < messages.length && (
+              <button
+                onClick={() => setVisibleCount((c) => c + 6)}
+                className="w-full text-sm font-medium px-4 py-2.5 rounded-lg bg-[#1E2030] border border-[#2A2C3D] text-[#C7C9D9] hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+              >
+                Show more
+              </button>
+            )}
+          </>
+        ) : (
+          <CommunityRandomTab messages={messages} cardProps={getCardProps} />
+        )}
       </div>
     </main>
   )
