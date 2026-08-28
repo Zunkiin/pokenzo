@@ -1,8 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import { toNOK, convertCurrency, formatPrice, COUNTRY_CURRENCY } from '@/lib/currency'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import BackButton from '@/components/back-button'
 import ProductListings from '@/components/product-listings'
+import ProductSuggestions from '@/components/product-suggestions'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 function formatProductType(type) {
@@ -17,28 +19,6 @@ function formatProductType(type) {
   return labels[type] || type
 }
 
-const FLAGS = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
-
-function getSuggestionCountryPrices(listings) {
-  const inStock = (listings || []).filter((l) => l.in_stock)
-  const countries = ['NO', 'SE', 'DK']
-
-  return countries.map((c) => {
-    const relevant = inStock.filter((l) => l.stores?.country === c || l.stores?.ships_to?.includes(c))
-    if (relevant.length === 0) return null
-
-    let cheapest = null
-    for (const listing of relevant) {
-      const nokPrice = toNOK(listing.current_price, listing.currency)
-      if (cheapest === null || nokPrice < cheapest.nokPrice) {
-        cheapest = { nokPrice, price: listing.current_price, currency: listing.currency }
-      }
-    }
-    const targetCurrency = COUNTRY_CURRENCY[c]
-    const converted = convertCurrency(cheapest.price, cheapest.currency, targetCurrency)
-    return { flag: FLAGS[c], display: formatPrice(converted, targetCurrency) }
-  }).filter(Boolean)
-}
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
@@ -92,17 +72,10 @@ export default async function ProductPage({ params }) {
       .then(() => {})
   }
 
-  const [{ data: listings }, { data: allMatching }] = await Promise.all([
-    supabase
-      .from('listings')
-      .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
-      .eq('product_id', product?.id),
-    supabase
-      .from('products')
-      .select('id, slug, name, image_url, product_type, language')
-      .eq('product_type', product?.product_type)
-      .neq('id', product?.id),
-  ])
+  const { data: listings } = await supabase
+    .from('listings')
+    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
+    .eq('product_id', product?.id)
 
   if (!product) {
     return (
@@ -111,23 +84,6 @@ export default async function ProductPage({ params }) {
       </main>
     )
   }
-
-  const shuffled = allMatching
-    ? [...allMatching].sort(() => Math.random() - 0.5).slice(0, 4)
-    : []
-
-  const suggestions = await Promise.all(
-    shuffled.map(async (s) => {
-      const { data: sListings } = await supabase
-        .from('listings')
-        .select('current_price, currency, in_stock, stores(country, ships_to)')
-        .eq('product_id', s.id)
-
-      const countryPrices = getSuggestionCountryPrices(sListings)
-
-      return { ...s, countryPrices }
-    })
-  )
 
   return (
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pb-16 pt-16">
@@ -180,39 +136,18 @@ export default async function ProductPage({ params }) {
           </a>
         </div>
 
-        {suggestions && suggestions.length > 0 && (
+        <Suspense fallback={
           <div className="mt-8">
             <h2 className="text-sm font-semibold text-[#8A8C9C] mb-3">You might also like</h2>
             <div className="space-y-2">
-              {suggestions.map((s) => (
-                <Link
-                  key={s.id}
-                  href={'/product/' + s.slug}
-                  className="flex items-center gap-3 rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3 hover:border-[#E8A33D] transition-colors"
-                >
-                  {s.image_url && (
-                    <img src={s.image_url} alt={s.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{s.name}</p>
-                    <p className="text-xs text-[#8A8C9C]">
-                      {s.language === 'JP' ? 'Japanese' : s.language === 'EN' ? 'English' : s.language === 'CN' ? 'Chinese' : ''}
-                    </p>
-                  </div>
-                  {s.countryPrices && s.countryPrices.length > 0 && (
-                    <div className="text-right flex-shrink-0">
-                      {s.countryPrices.map((p, i) => (
-                        <p key={i} className="font-mono text-xs font-semibold text-[#E8A33D] whitespace-nowrap">
-                          {p.flag} {p.display}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </Link>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 rounded-xl border border-[#2A2C3D] bg-[#1E2030] animate-pulse" />
               ))}
             </div>
           </div>
-        )}
+        }>
+          <ProductSuggestions productType={product.product_type} excludeId={product.id} />
+        </Suspense>
       </div>
     </main>
   )
