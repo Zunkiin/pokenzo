@@ -14,7 +14,7 @@ function formatProductType(type) {
     etb: 'Elite Trainer Box',
     booster_bundle: 'Booster Bundle',
     collection_box: 'Collection Box',
-    tin: 'Tin',
+    tin_box: 'Tin Box',
   }
   return labels[type] || type
 }

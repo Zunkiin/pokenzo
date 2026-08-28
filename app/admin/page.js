@@ -89,7 +89,7 @@ export default async function AdminPage() {
               <option value="etb">Elite Trainer Box</option>
               <option value="booster_bundle">Booster Bundle</option>
               <option value="collection_box">Collection Box</option>
-              <option value="tin">Tin</option>
+              <option value="tin_box">Tin Box</option>
             </select>
             <select name="language" required
               className="w-full px-3 py-2 rounded-lg bg-[#14151F] border border-[#2A2C3D] text-sm focus:outline-none focus:border-[#E8A33D]">
