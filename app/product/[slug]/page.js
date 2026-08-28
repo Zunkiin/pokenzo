@@ -12,7 +12,7 @@ function formatProductType(type) {
     etb: 'Elite Trainer Box',
     booster_bundle: 'Booster Bundle',
     collection_box: 'Collection Box',
-    tin_box: 'Tin Box',
+    tin: 'Tin',
   }
   return labels[type] || type
 }
@@ -82,17 +82,27 @@ export default async function ProductPage({ params }) {
     .single()
 
   if (product) {
+    // Fire-and-forget: the click counter doesn't need to block the page
+    // from rendering - nobody needs to see this write finish.
     const supabaseAdmin = getSupabaseAdmin()
-    await supabaseAdmin
+    supabaseAdmin
       .from('products')
       .update({ click_count: (product.click_count || 0) + 1 })
       .eq('id', product.id)
+      .then(() => {})
   }
 
-  const { data: listings } = await supabase
-    .from('listings')
-    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
-    .eq('product_id', product?.id)
+  const [{ data: listings }, { data: allMatching }] = await Promise.all([
+    supabase
+      .from('listings')
+      .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
+      .eq('product_id', product?.id),
+    supabase
+      .from('products')
+      .select('id, slug, name, image_url, product_type, language')
+      .eq('product_type', product?.product_type)
+      .neq('id', product?.id),
+  ])
 
   if (!product) {
     return (
@@ -101,12 +111,6 @@ export default async function ProductPage({ params }) {
       </main>
     )
   }
-
-  const { data: allMatching } = await supabase
-    .from('products')
-    .select('id, slug, name, image_url, product_type, language')
-    .eq('product_type', product.product_type)
-    .neq('id', product.id)
 
   const shuffled = allMatching
     ? [...allMatching].sort(() => Math.random() - 0.5).slice(0, 4)
