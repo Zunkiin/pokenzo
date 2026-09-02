@@ -16,6 +16,19 @@ export default async function HomePage({ searchParams }) {
     .from('products')
     .select('id, slug, name, product_type, language, image_url, description, release_date, click_count, listings(current_price, currency, in_stock, stores(name, country, ships_to))')
 
+  // Fetch raw click events from the last 7 days and tally them per product,
+  // so "Most Popular (Last 7 Days)" can differ from the lifetime click_count.
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: recentClicks } = await supabase
+    .from('product_clicks')
+    .select('product_id')
+    .gte('created_at', sevenDaysAgo)
+
+  const weeklyClickCounts = {}
+  for (const click of recentClicks || []) {
+    weeklyClickCounts[click.product_id] = (weeklyClickCounts[click.product_id] || 0) + 1
+  }
+
   const allProducts = products || []
 
   let filteredProducts = allProducts
@@ -35,7 +48,7 @@ export default async function HomePage({ searchParams }) {
         <SectionTabs active="tcg" />
         <CategoryNav activeType={type || null} activeLanguage={language || null} />
         <h1 className="sr-only">All Pokémon TCG products</h1>
-        <ProductList products={filteredProducts} />
+        <ProductList products={filteredProducts} weeklyClickCounts={weeklyClickCounts} />
       </div>
     </main>
   )

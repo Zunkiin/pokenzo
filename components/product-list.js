@@ -107,7 +107,7 @@ function enrichProduct(product, selectedCountry) {
   }
 }
 
-export default function ProductList({ products }) {
+export default function ProductList({ products, weeklyClickCounts = {} }) {
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState('random')
   const [country, setCountry] = useState('ALL')
@@ -206,6 +206,8 @@ export default function ProductList({ products }) {
   let sorted = filtered
   if (sortBy === 'clicked') {
     sorted = [...filtered].sort((a, b) => (b.click_count || 0) - (a.click_count || 0))
+  } else if (sortBy === 'clicked_week') {
+    sorted = [...filtered].sort((a, b) => (weeklyClickCounts[b.id] || 0) - (weeklyClickCounts[a.id] || 0))
   } else if (sortBy === 'price_asc') {
     sorted = [...filtered].sort((a, b) => (a.cheapestPriceNOK ?? Infinity) - (b.cheapestPriceNOK ?? Infinity))
   } else if (sortBy === 'price_desc') {
@@ -313,7 +315,8 @@ export default function ProductList({ products }) {
           >
             <option value="random">Random</option>
             <option value="relevance">Relevance</option>
-            <option value="clicked">Most Popular</option>
+            <option value="clicked">Most Popular (All Time)</option>
+            <option value="clicked_week">Most Popular (Last 7 Days)</option>
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="price_asc">Price: Low to High</option>
