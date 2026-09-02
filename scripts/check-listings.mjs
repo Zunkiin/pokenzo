@@ -14,6 +14,14 @@ if (DRY_RUN) {
   console.log('=== DRY RUN MODE: no Discord alerts will be sent, no database writes will happen ===')
 }
 
+// Set STORE_FILTER=StoreName to only check listings from that one store -
+// useful for quickly testing a single newly-added store without waiting
+// for every other listing to be checked first.
+const STORE_FILTER = process.env.STORE_FILTER || null
+if (STORE_FILTER) {
+  console.log(`=== STORE FILTER: only checking listings from "${STORE_FILTER}" ===`)
+}
+
 const OUT_OF_STOCK_PHRASES = [
   'utsolgt', 'ikke på lager', 'ikke tilgjengelig',
   'slut i lager', 'slutsåld', 'ej i lager',
@@ -126,14 +134,17 @@ function getRelevantSection(fullText, productName) {
 }
 
 function extractPrice(text) {
-  const match = text.match(/(\d[\d\s.,]{0,8})\s?(?:kr|nok|sek|dkk)/i)
+  // Exclude numbers immediately preceded by "over" - almost always a
+  // shipping-threshold phrase (e.g. "fri frakt over 300kr"), not the
+  // actual product price.
+  const match = text.match(/(?<!over\s)(\d[\d\s.,]{0,8})\s?(?:kr|nok|sek|dkk)/i)
   return match ? parsePriceString(match[1]) : null
 }
 
 function extractMetaPrice(html) {
   const metaMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:price:amount|product:price:amount)["'][^>]*>/i)
   if (!metaMatch) return null
-  const contentMatch = metaMatch[0].match(/content=["']([\d.,]+)["']/i)
+  const contentMatch = metaMatch[0].match(/content=["']([\d.,\s]+)["']/i)
   if (!contentMatch) return null
   return parsePriceString(contentMatch[1])
 }
@@ -236,7 +247,11 @@ async function main() {
     process.exit(1)
   }
 
-  for (const listing of listings) {
+  const listingsToCheck = STORE_FILTER
+    ? listings.filter((l) => l.stores?.name === STORE_FILTER)
+    : listings
+
+  for (const listing of listingsToCheck) {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
