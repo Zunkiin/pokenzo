@@ -70,11 +70,18 @@ export default async function ProductPage({ params }) {
       .update({ click_count: (product.click_count || 0) + 1 })
       .eq('id', product.id)
       .then(() => {})
+
+    // Also log this click with a timestamp, so popularity can be filtered
+    // by time period (last 7 days, last 30 days, etc), not just a lifetime total.
+    supabaseAdmin
+      .from('product_clicks')
+      .insert({ product_id: product.id })
+      .then(() => {})
   }
 
   const { data: listings } = await supabase
     .from('listings')
-    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to)')
+    .select('id, product_url, currency, current_price, in_stock, last_checked_at, stores(name, country, ships_to, is_affiliate)')
     .eq('product_id', product?.id)
 
   if (!product) {

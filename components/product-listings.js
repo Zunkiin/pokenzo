@@ -174,6 +174,11 @@ export default function ProductListings({ listings }) {
                       <span key={c} className={getCountryBadgeClass(c)}>{c}</span>
                     ))}
                     {storeName}
+                    {listing.stores?.is_affiliate && (
+                      <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-gradient-to-r from-[#E8A33D]/20 to-[#E8A33D]/5 text-[#E8A33D] border border-[#E8A33D]/50 align-middle">
+                        Partner
+                      </span>
+                    )}
                   </p>
                   <p className={stockTextClass}>
                     {listing.in_stock ? 'In stock' : 'Out of stock'}
