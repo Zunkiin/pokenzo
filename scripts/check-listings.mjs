@@ -22,6 +22,14 @@ if (STORE_FILTER) {
   console.log(`=== STORE FILTER: only checking listings from "${STORE_FILTER}" ===`)
 }
 
+// Set PRODUCT_FILTER=Some Product Name (partial match, case-insensitive) to
+// only check listings for that one product, across all stores - useful for
+// debugging a single problem product without waiting for the full run.
+const PRODUCT_FILTER = process.env.PRODUCT_FILTER || null
+if (PRODUCT_FILTER) {
+  console.log(`=== PRODUCT FILTER: only checking listings for products matching "${PRODUCT_FILTER}" ===`)
+}
+
 const OUT_OF_STOCK_PHRASES = [
   'utsolgt', 'ikke på lager', 'ikke tilgjengelig',
   'slut i lager', 'slutsåld', 'ej i lager',
@@ -216,6 +224,34 @@ function extractJsonLdAvailability(html) {
   return null
 }
 
+// Same idea as extractJsonLdAvailability, but for the price field. Some
+// stores (e.g. Maxgaming) apparently don't expose price via a simple meta
+// tag or WooCommerce markup at all - only through this structured data -
+// meaning extractMetaPrice/extractWooCommercePrice silently return null
+// for them, and the price never updates.
+function extractJsonLdPrice(html) {
+  const scriptBlocks = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || []
+  for (const block of scriptBlocks) {
+    const jsonMatch = block.match(/>([\s\S]*?)<\/script>/i)
+    if (!jsonMatch) continue
+    try {
+      const data = JSON.parse(jsonMatch[1])
+      const candidates = Array.isArray(data) ? data : [data, ...(data['@graph'] || [])]
+      for (const item of candidates) {
+        const offers = item?.offers
+        const price = (Array.isArray(offers) ? offers[0]?.price : offers?.price) ?? item?.price
+        if (price !== undefined && price !== null) {
+          const parsed = parsePriceString(String(price))
+          if (parsed !== null) return parsed
+        }
+      }
+    } catch (e) {
+      // Malformed or unexpected JSON-LD - ignore and fall through.
+    }
+  }
+  return null
+}
+
 async function sendDiscordAlert(message, country) {
   if (DRY_RUN) {
     console.log(`[DRY RUN] Would send Discord alert to ${country || 'fallback'}:\n${message}`)
@@ -247,9 +283,15 @@ async function main() {
     process.exit(1)
   }
 
-  const listingsToCheck = STORE_FILTER
-    ? listings.filter((l) => l.stores?.name === STORE_FILTER)
-    : listings
+  let listingsToCheck = listings
+  if (STORE_FILTER) {
+    listingsToCheck = listingsToCheck.filter((l) => l.stores?.name === STORE_FILTER)
+  }
+  if (PRODUCT_FILTER) {
+    listingsToCheck = listingsToCheck.filter((l) =>
+      (l.products?.name || '').toLowerCase().includes(PRODUCT_FILTER.toLowerCase())
+    )
+  }
 
   for (const listing of listingsToCheck) {
     try {
@@ -304,7 +346,7 @@ async function main() {
 
       const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
       const overridePrice = priceOverrideFn ? priceOverrideFn(cleanedText) : null
-      const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html)
+      const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html) ?? extractJsonLdPrice(html)
       const candidatePrice = overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText))
       let newPrice = listing.current_price
 
