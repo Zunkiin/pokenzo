@@ -37,6 +37,15 @@ const OUT_OF_STOCK_PHRASES = [
   'kommer snart', 'lagerbeholdning: 0'
 ]
 
+// Pre-order phrases are treated as "available to buy" (in stock) - during a
+// launch window, most/all stores only offer pre-orders, and a customer CAN
+// place an order right now even though nothing has physically shipped yet.
+// These phrases are specific enough (unlike generic stock wording) to be
+// low-risk as a global, cross-store signal.
+const PREORDER_PHRASES = [
+  'forhåndsbestil', 'forhåndbestil', 'forudbestil', 'förbeställ', 'förhandsboka', 'förboka'
+]
+
 // Some stores' product pages contain stock text for MORE than one variant
 // at once in the raw HTML (e.g. Rogerz shows both "Out of stock" and "in
 // stock, ready to be shipped" for two different price variants on the same
@@ -342,6 +351,21 @@ async function main() {
           : jsonLdAvailability !== null
             ? jsonLdAvailability
             : !OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p))
+      }
+
+      // A visible pre-order phrase means the customer can actually place an
+      // order right now - but only when there's no explicit out-of-stock
+      // phrase also present. Some stores (e.g. Boosterpakker) keep a
+      // "Forhåndsbestill" button visible even on a genuinely sold-out
+      // listing, alongside a clear "Utsolgt" status - that explicit
+      // negative signal must win.
+      if (storeName === 'Maxgaming NO' && productName.includes('JP')) {
+        console.log('DEBUG Maxgaming NO contains utsolgt:', OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p)))
+        console.log('DEBUG Maxgaming NO contains forhåndsbestil:', PREORDER_PHRASES.some(p => cleanedText.includes(p)))
+      }
+      const hasExplicitOutOfStock = OUT_OF_STOCK_PHRASES.some((p) => cleanedText.includes(p))
+      if (!hasExplicitOutOfStock && PREORDER_PHRASES.some((p) => cleanedText.includes(p))) {
+        newInStock = true
       }
 
       const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
