@@ -37,6 +37,17 @@ const OUT_OF_STOCK_PHRASES = [
   'kommer snart', 'lagerbeholdning: 0'
 ]
 
+// A subset of OUT_OF_STOCK_PHRASES that are strong, definitive statements
+// ("Sold out") rather than a neutral zero-count label ("Lagerbeholdning: 0").
+// A bare zero-count is compatible with an active pre-order (that's the
+// whole point of pre-ordering), so only this stronger subset should be
+// allowed to block the pre-order override below.
+const STRONG_OUT_OF_STOCK_PHRASES = [
+  'utsolgt', 'ikke på lager', 'ikke tilgjengelig',
+  'slut i lager', 'slutsåld', 'ej i lager',
+  'udsolgt', 'sold out', 'out of stock'
+]
+
 // Pre-order phrases are treated as "available to buy" (in stock) - during a
 // launch window, most/all stores only offer pre-orders, and a customer CAN
 // place an order right now even though nothing has physically shipped yet.
@@ -359,11 +370,7 @@ async function main() {
       // "Forhåndsbestill" button visible even on a genuinely sold-out
       // listing, alongside a clear "Utsolgt" status - that explicit
       // negative signal must win.
-      if (storeName === 'Maxgaming NO' && productName.includes('JP')) {
-        console.log('DEBUG Maxgaming NO contains utsolgt:', OUT_OF_STOCK_PHRASES.some(p => cleanedText.includes(p)))
-        console.log('DEBUG Maxgaming NO contains forhåndsbestil:', PREORDER_PHRASES.some(p => cleanedText.includes(p)))
-      }
-      const hasExplicitOutOfStock = OUT_OF_STOCK_PHRASES.some((p) => cleanedText.includes(p))
+      const hasExplicitOutOfStock = STRONG_OUT_OF_STOCK_PHRASES.some((p) => cleanedText.includes(p))
       if (!hasExplicitOutOfStock && PREORDER_PHRASES.some((p) => cleanedText.includes(p))) {
         newInStock = true
       }
