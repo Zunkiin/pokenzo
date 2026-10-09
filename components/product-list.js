@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { toNOK, convertCurrency, formatPrice, COUNTRY_CURRENCY } from '@/lib/currency'
 
@@ -10,6 +10,7 @@ const SORT_BY_KEY = 'pokenzo_sort_by'
 const COUNTRY_KEY = 'pokenzo_country'
 const QUERY_KEY = 'pokenzo_query'
 const IN_STOCK_KEY = 'pokenzo_in_stock_only'
+
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -109,6 +110,7 @@ function enrichProduct(product, selectedCountry) {
 
 export default function ProductList({ products, weeklyClickCounts = {} }) {
   const [query, setQuery] = useState('')
+  const searchRef = useRef(null)
   const [sortBy, setSortBy] = useState('random')
   const [country, setCountry] = useState('ALL')
   const [inStockOnly, setInStockOnly] = useState(false)
@@ -277,16 +279,25 @@ export default function ProductList({ products, weeklyClickCounts = {} }) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <div className="relative flex-1">
+        <form
+          className="relative flex-1"
+          onSubmit={(e) => {
+            e.preventDefault()
+            searchRef.current?.blur()
+          }}
+        >
           <input
+            ref={searchRef}
             type="text"
+            enterKeyHint="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for a product or store..."
-            className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-sm focus:outline-none focus:border-[#E8A33D]"
+            className="w-full px-4 py-2.5 rounded-xl bg-[#1E2030] border border-[#2A2C3D] text-[#EDEAE3] placeholder-[#5C5E70] text-base sm:text-sm focus:outline-none focus:border-[#E8A33D]"
           />
           {query && (
             <button
+              type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-[#2A2C3D] text-[#C7C9D9] hover:bg-[#3A3C4D] text-xs leading-none"
@@ -294,7 +305,7 @@ export default function ProductList({ products, weeklyClickCounts = {} }) {
               ✕
             </button>
           )}
-        </div>
+        </form>
 
         <div className="flex gap-2">
           <button
