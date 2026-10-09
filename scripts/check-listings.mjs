@@ -296,7 +296,7 @@ async function sendDiscordAlert(message, country) {
 async function main() {
   const { data: listings, error } = await supabase
   .from('listings')
-  .select('id, product_url, currency, current_price, in_stock, pending_in_stock, products(name, slug), stores(name, country)')
+    .select('id, product_url, currency, current_price, in_stock, pending_in_stock, pending_price, products(name, slug), stores(name, country)')
 
   if (error) {
     console.error('Failed to fetch listings:', error.message)
@@ -315,6 +315,7 @@ async function main() {
 
   for (const listing of listingsToCheck) {
     try {
+      if (listing.stores?.name === 'Cardcenter') await new Promise((r) => setTimeout(r, 800))
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
       let res
@@ -380,12 +381,19 @@ async function main() {
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html) ?? extractJsonLdPrice(html)
       const candidatePrice = overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText))
       let newPrice = listing.current_price
+      let pendingPrice = null
 
-      if (candidatePrice !== null) {
-        if (listing.current_price) {
+            if (candidatePrice !== null) {
+        if (listing.current_price && listing.current_price > 1) {
           const percentChange = Math.abs(candidatePrice - listing.current_price) / listing.current_price
           if (percentChange > 0.7) {
-            console.warn(`Suspicious price change for ${storeName} - ${productName}: ${listing.current_price} → ${candidatePrice}. Keeping old price.`)
+            if (listing.pending_price !== null && listing.pending_price !== undefined && Number(listing.pending_price) === candidatePrice) {
+              console.warn(`Large price change confirmed twice for ${storeName} - ${productName}: ${listing.current_price} → ${candidatePrice}. Accepting.`)
+              newPrice = candidatePrice
+            } else {
+              console.warn(`Suspicious price change for ${storeName} - ${productName}: ${listing.current_price} → ${candidatePrice}. Keeping old price until seen twice.`)
+              pendingPrice = candidatePrice
+            }
           } else {
             newPrice = candidatePrice
           }
@@ -464,6 +472,7 @@ async function main() {
             current_price: newPrice,
             in_stock: confirmedInStock,
             pending_in_stock: pendingInStock,
+            pending_price: pendingPrice,
             last_checked_at: new Date().toISOString()
           })
           .eq('id', listing.id)
