@@ -67,7 +67,7 @@ const PREORDER_PHRASES = [
 // only updates via client-side JavaScript we never run), with no positive
 // signal to fall back on either. Skip automatic stock-status changes for
 // these until a more reliable method (like a store JSON endpoint) is built.
-const SKIP_STOCK_UPDATES_FOR_STORES = ['Pokelageret']
+const SKIP_STOCK_UPDATES_FOR_STORES = []
 
 // Stores whose availability meta tag has proven unreliable (doesn't match
 // the actual visible stock text on the page). For these, skip the meta
@@ -96,7 +96,7 @@ const PRICE_OVERRIDE_BY_STORE = {
 // Stores whose stock status has proven to flip-flop rapidly - these get
 // the extra "confirm on two consecutive checks" treatment before alerting,
 // while all other stores alert immediately as before.
-const VOLATILE_STORES = ['Pokemons']
+const VOLATILE_STORES = ['Pokemons', 'Pokelageret']
 
 const END_MARKERS = [
   'anbefalte produkter', 'du liker kanskje også', 'related products',
