@@ -232,7 +232,7 @@ function extractJsonLdAvailability(html) {
     if (!jsonMatch) continue
     try {
       const data = JSON.parse(jsonMatch[1])
-      const candidates = Array.isArray(data) ? data : [data, ...(data['@graph'] || [])]
+      const candidatePrice = shopifyData ? shopifyData.price : (overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText)))
       for (const item of candidates) {
         const offers = item?.offers
         const availability = (Array.isArray(offers) ? offers[0]?.availability : offers?.availability) ?? item?.availability
@@ -295,6 +295,37 @@ async function sendDiscordAlert(message, country) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content: message })
   })
+}
+
+// Shopify stores: read the exact variant's price and stock from the product's
+// .js endpoint. Returns null on any problem, so the normal logic is used instead.
+async function getShopifyVariantData(productUrl, productName) {
+  try {
+    const url = new URL(productUrl)
+    const variantId = url.searchParams.get('variant')
+    url.search = ''
+    url.hash = ''
+    const res = await fetch(`${url.toString().replace(/\/$/, '')}.js`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36', 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(15000)
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const variants = data.variants || []
+    let variant = null
+    if (variantId) {
+      variant = variants.find((v) => String(v.id) === variantId)
+    } else if (variants.length === 1) {
+      variant = variants[0]
+    } else {
+      const pattern = /pack/i.test(productName) ? /pack/i : /box/i
+      variant = variants.find((v) => pattern.test(v.title))
+    }
+    if (!variant || typeof variant.price !== 'number') return null
+    return { price: variant.price / 100, available: variant.available === true }
+  } catch {
+    return null
+  }
 }
 
 async function main() {
@@ -379,7 +410,8 @@ async function main() {
       if (!hasExplicitOutOfStock && PREORDER_PHRASES.some((p) => cleanedText.includes(p))) {
         newInStock = true
       }
-
+      const shopifyData = storeName === 'Pokelageret' ? await getShopifyVariantData(listing.product_url, productName) : null
+      if (shopifyData) newInStock = shopifyData.available
       const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
       const overridePrice = priceOverrideFn ? priceOverrideFn(cleanedText) : null
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html) ?? extractJsonLdPrice(html)
