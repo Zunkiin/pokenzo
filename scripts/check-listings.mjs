@@ -87,6 +87,10 @@ const PRICE_OVERRIDE_BY_STORE = {
     const match = text.match(/alm\.?\s*moms\s*-?\s*([\d.,]+)/i)
     return match ? parsePriceString(match[1]) : null
   },
+  Pokelageret: (text) => {
+    const match = text.match(/salgs\s*pris\s*:?\s*([\d.,]+)/i)
+    return match ? parsePriceString(match[1]) : null
+  },
 }
 
 // Stores whose stock status has proven to flip-flop rapidly - these get
