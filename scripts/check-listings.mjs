@@ -232,7 +232,7 @@ function extractJsonLdAvailability(html) {
     if (!jsonMatch) continue
     try {
       const data = JSON.parse(jsonMatch[1])
-      const candidatePrice = shopifyData ? shopifyData.price : (overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText)))
+            const candidates = Array.isArray(data) ? data : [data, ...(data['@graph'] || [])]
       for (const item of candidates) {
         const offers = item?.offers
         const availability = (Array.isArray(offers) ? offers[0]?.availability : offers?.availability) ?? item?.availability
@@ -424,7 +424,7 @@ async function main() {
       const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
       const overridePrice = priceOverrideFn ? priceOverrideFn(cleanedText) : null
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html) ?? extractJsonLdPrice(html)
-      const candidatePrice = overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText))
+      const candidatePrice = shopifyData ? shopifyData.price : (overridePrice !== null ? overridePrice : (metaPrice !== null ? metaPrice : extractPrice(relevantText)))
       let newPrice = listing.current_price
       let pendingPrice = null
 
