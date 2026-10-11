@@ -376,7 +376,9 @@ async function main() {
 
       const fullText = stripHtml(html).toLowerCase()
       const relevantText = getRelevantSection(fullText, productName)
-      const cleanedText = relevantText.replace(/salg\s+utsolgt/gi, '')
+      const cleanedText = relevantText
+        .replace(/salg\s+utsolgt/gi, '')
+        .replace(/åpningsdato\s+kommer\s+snart/gi, '')
 
       const overridePhrases = IN_STOCK_OVERRIDE_BY_STORE[storeName]
       let newInStock
@@ -412,6 +414,13 @@ async function main() {
       }
       const shopifyData = storeName === 'Pokelageret' ? await getShopifyVariantData(listing.product_url, productName) : null
       if (shopifyData) newInStock = shopifyData.available
+      if (storeName.startsWith('Maxgaming')) {
+      const itemprop = html.match(/<meta[^>]*itemprop=["']availability["'][^>]*content=["']([^"']+)["']/i)
+      if (itemprop) {
+      if (/instock|preorder|backorder/i.test(itemprop[1])) newInStock = true
+        else if (/outofstock|soldout/i.test(itemprop[1])) newInStock = false
+        }
+      }
       const priceOverrideFn = PRICE_OVERRIDE_BY_STORE[storeName]
       const overridePrice = priceOverrideFn ? priceOverrideFn(cleanedText) : null
       const metaPrice = extractWooCommercePrice(html, productName) ?? extractMetaPrice(html) ?? extractJsonLdPrice(html)
