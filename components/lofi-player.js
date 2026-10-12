@@ -31,18 +31,18 @@ function readSavedVolume() {
     const saved = parseInt(localStorage.getItem(VOLUME_KEY), 10)
     if (!Number.isNaN(saved) && saved >= 0 && saved <= 100) return saved
   } catch {}
-  return 40
+  return 15
 }
 
 export default function LofiPlayer() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState('idle') // idle | loading | ready | error
   const [playing, setPlaying] = useState(false)
-  const [volume, setVolume] = useState(40)
+  const [volume, setVolume] = useState(15)
 
   const playerRef = useRef(null)
   const wrapRef = useRef(null)
-  const volumeRef = useRef(40)
+  const volumeRef = useRef(15)
 
   useEffect(() => {
     const saved = readSavedVolume()
