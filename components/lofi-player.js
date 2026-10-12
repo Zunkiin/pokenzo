@@ -146,11 +146,11 @@ export default function LofiPlayer() {
       {open && (
         <div className="w-60 rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-3 shadow-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#EDEAE3]">Poke Radio</span>
+            <span className="text-xs font-semibold text-[#EDEAE3]">Pokenzo Radio</span>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Minimize Poke Radio"
+              aria-label="Minimize Pokenzo Radio"
               className="flex items-center justify-center w-7 h-7 -mr-1 text-[#8A8C9C] hover:text-[#E8A33D] transition-colors"
             >
               <span className="block w-3.5 h-[3px] rounded-full bg-current" />
@@ -234,7 +234,7 @@ export default function LofiPlayer() {
       <button
         type="button"
         onClick={handleToggleOpen}
-        aria-label={open ? 'Hide Poke Radio' : 'Open Poke Radio'}
+        aria-label={open ? 'Hide Pokenzo Radio' : 'Open Pokenzo Radio'}
         className={
           'w-11 h-11 rounded-full border text-lg transition-colors shadow-lg ' +
           (playing
