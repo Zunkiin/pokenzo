@@ -188,7 +188,7 @@ export default function LofiPlayer() {
           className={
           'w-11 h-11 rounded-full border text-lg transition-colors shadow-lg ' +
           (playing
-            ? 'bg-[#E8A33D] border-[#E8A33D] text-[#14151F]'
+            ? 'bg-gradient-to-br from-[#E8A33D]/40 to-[#E8A33D]/15 border-[#E8A33D] text-[#E8A33D]'
             : 'bg-gradient-to-br from-[#E8A33D]/25 to-[#E8A33D]/5 border-[#E8A33D]/50 text-[#E8A33D] hover:border-[#E8A33D]')
         }
       >
