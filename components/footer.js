@@ -14,7 +14,7 @@ export default function Footer() {
         Buy me a coffee
       </a>
       <p className="text-xs text-[#5C5E70] leading-relaxed">
-        Pokenzo is an independent, fan-made project and is not endorsed by, affiliated with, or sponsored by Nintendo, Niantic, GAME FREAK, or The Pokémon Company. All Pokémon names, images, and related trademarks belong to their respective owners. Pokenzo provides price comparisons and community tools for Pokémon fans and does not claim ownership of any Pokémon content shown on this site.
+        Pokenzo is an independent, fan-made project and is not endorsed by, affiliated with, or sponsored by Nintendo, Niantic, GAME FREAK, or The Pokémon Company. All Pokémon names, images, and trademarks belong to their respective owners.
       </p>
       <div className="flex items-center justify-center gap-3 mt-3">
         <Link href="/about" className="text-xs text-[#8A8C9C] hover:text-[#E8A33D] transition-colors">
