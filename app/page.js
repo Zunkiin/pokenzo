@@ -38,7 +38,7 @@ export default async function HomePage({ searchParams }) {
   const carouselProducts = allProducts.filter((p) => p.image_url)
 
   return (
-    <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] pb-16">
+    <main className="min-h-screen text-[#EDEAE3] pb-16">
       <HeroCarousel products={carouselProducts} />
 
       <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 mt-6">

@@ -20,7 +20,7 @@
 }
 
 body {
-  background: var(--background);
+  background: #14151F;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -31,4 +31,90 @@ body {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ===== Starfield background (add at the END of app/globals.css) ===== */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -10;            /* behind all content, above the page background colour */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.stars-layer {
+  position: absolute;
+  inset: -40px;            /* a little bigger than the screen so drifting never shows an edge */
+  will-change: transform;
+}
+.stars-far  { animation: drift 120s ease-in-out infinite alternate; }
+.stars-mid  { animation: drift 80s  ease-in-out infinite alternate-reverse; }
+.stars-near { animation: drift 55s  ease-in-out infinite alternate; }
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-28px, 22px, 0); }
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #EDEAE3;
+  opacity: 0.2;
+  animation: twinkle 4s ease-in-out infinite, float 14s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--fx, 9px), var(--fy, -9px), 0); }
+}
+
+.star-warm { background: #E8A33D; }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 0.85; }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 130px;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(237, 234, 227, 0), rgba(237, 234, 227, 0.95));
+  border-radius: 999px;
+  opacity: 0;
+  transform: rotate(32deg) translateX(0);
+  animation: shoot 14s linear infinite;
+}
+
+/* Visible only for ~2 seconds of each cycle; the rest of the time it is invisible */
+@keyframes shoot {
+  0%, 90%  { opacity: 0; transform: rotate(32deg) translateX(0); }
+  91%      { opacity: 1; }
+  100%     { opacity: 0; transform: rotate(32deg) translateX(650px); }
+}
+
+@media (max-width: 767px) {
+  .hidden-on-small { display: none; }   /* fewer stars on phones */
+}
+
+/* People who turned off animations in their system get still stars, no shooting stars */
+@media (prefers-reduced-motion: reduce) {
+  .stars-layer, .star { animation: none; }
+  .star { opacity: 0.5; }
+  .shooting-star { display: none; }
+}
+
+/* Add at the end of app/globals.css: soft fade-in when the sky appears */
+.starfield-fade {
+  animation: sky-in 1.4s ease-out;
+}
+@keyframes sky-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Let the starfield show through on every page */
+main {
+  background-color: transparent;
 }

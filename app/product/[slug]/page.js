@@ -86,14 +86,14 @@ export default async function ProductPage({ params }) {
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] flex items-center justify-center px-6">
+      <main className="min-h-screen text-[#EDEAE3] flex items-center justify-center px-6">
         <p className="text-center">Product not found.</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pb-16 pt-16">
+    <main className="min-h-screen text-[#EDEAE3] px-4 pb-16 pt-16">
       <div className="max-w-md mx-auto">
         <BackButton />
 
