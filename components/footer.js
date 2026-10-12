@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 py-8 text-center">
+    <footer className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 py-8 text-center border-t border-white/10 mt-8">
       <a
         href="https://buymeacoffee.com/pokenzo"
         target="_blank"
