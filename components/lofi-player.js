@@ -7,6 +7,14 @@ const VIDEO_ID = 'ITV29NndpYA'
 const VIDEO_URL = `https://www.youtube.com/watch?v=${VIDEO_ID}`
 const VOLUME_KEY = 'pokenzo-lofi-volume'
 
+// Tre volumnivåer (0-100). Endre tallene her hvis du vil ha dem høyere eller lavere.
+const VOLUME_LEVELS = [
+  { label: 'Low', value: 15 },
+  { label: 'Medium', value: 35 },
+  { label: 'High', value: 60 },
+]
+const DEFAULT_VOLUME = VOLUME_LEVELS[0].value
+
 function loadYouTubeApi() {
   return new Promise((resolve) => {
     if (window.YT && window.YT.Player) {
@@ -26,28 +34,40 @@ function loadYouTubeApi() {
   })
 }
 
+// Finner nærmeste nivå (Low/Medium/High) til et volum, brukes til å markere valgt knapp på mobil
+function nearestLevel(v) {
+  return VOLUME_LEVELS.reduce((best, l) =>
+    Math.abs(l.value - v) < Math.abs(best.value - v) ? l : best
+  ).value
+}
+
 function readSavedVolume() {
   try {
     const saved = parseInt(localStorage.getItem(VOLUME_KEY), 10)
     if (!Number.isNaN(saved) && saved >= 0 && saved <= 100) return saved
   } catch {}
-  return 15
+  return DEFAULT_VOLUME
 }
 
 export default function LofiPlayer() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState('idle') // idle | loading | ready | error
   const [playing, setPlaying] = useState(false)
-  const [volume, setVolume] = useState(15)
+  const [volume, setVolume] = useState(DEFAULT_VOLUME)
+  const [canSetVolume, setCanSetVolume] = useState(true)
 
   const playerRef = useRef(null)
   const wrapRef = useRef(null)
-  const volumeRef = useRef(15)
+  const volumeRef = useRef(DEFAULT_VOLUME)
 
   useEffect(() => {
     const saved = readSavedVolume()
     setVolume(saved)
     volumeRef.current = saved
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    if (isIOS) setCanSetVolume(false)
     return () => {
       try {
         if (playerRef.current && playerRef.current.destroy) playerRef.current.destroy()
@@ -105,8 +125,7 @@ export default function LofiPlayer() {
     else p.playVideo()
   }
 
-  function handleVolume(e) {
-    const v = Number(e.target.value)
+  function handleVolume(v) {
     setVolume(v)
     volumeRef.current = v
     if (playerRef.current && playerRef.current.setVolume) playerRef.current.setVolume(v)
@@ -153,15 +172,46 @@ export default function LofiPlayer() {
               >
                 {status === 'loading' ? '…' : playing ? '❚❚' : '▶'}
               </button>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={volume}
-                onChange={handleVolume}
-                aria-label="Volume"
-                className="flex-1 accent-[#E8A33D]"
-              />
+              {canSetVolume ? (
+                <div className="flex-1">
+                  <p className="mb-1 text-[10px] text-[#8A8C9C]">Volume</p>
+                  {/* PC: slider */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={(e) => handleVolume(Number(e.target.value))}
+                    aria-label="Volume"
+                    className="hidden md:block w-full accent-[#E8A33D]"
+                  />
+                  {/* Mobil: Low / Medium / High */}
+                  <div className="md:hidden" role="group" aria-label="Volume">
+                    <div className="flex gap-1">
+                      {VOLUME_LEVELS.map((l) => (
+                        <button
+                          key={l.label}
+                          type="button"
+                          onClick={() => handleVolume(l.value)}
+                          aria-pressed={nearestLevel(volume) === l.value}
+                          className={
+                            'flex-1 rounded-full border px-1 py-1.5 text-[11px] font-medium transition-colors ' +
+                            (nearestLevel(volume) === l.value
+                              ? 'bg-[#E8A33D]/20 border-[#E8A33D] text-[#E8A33D]'
+                              : 'bg-[#14151F] border-[#4A4D67] text-[#C7C9D9] hover:border-[#E8A33D]')
+                          }
+                        >
+                          {l.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <span className="flex-1 text-[11px] leading-snug text-[#8A8C9C]">
+                  Use your phone&apos;s volume buttons
+                </span>
+              )}
             </div>
           )}
 
@@ -185,7 +235,7 @@ export default function LofiPlayer() {
         type="button"
         onClick={handleToggleOpen}
         aria-label={open ? 'Hide Poke Radio' : 'Open Poke Radio'}
-          className={
+        className={
           'w-11 h-11 rounded-full border text-lg transition-colors shadow-lg ' +
           (playing
             ? 'bg-gradient-to-br from-[#E8A33D]/40 to-[#E8A33D]/15 border-[#E8A33D] text-[#E8A33D]'
