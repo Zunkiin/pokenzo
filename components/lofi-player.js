@@ -185,11 +185,11 @@ export default function LofiPlayer() {
         type="button"
         onClick={handleToggleOpen}
         aria-label={open ? 'Hide Poke Radio' : 'Open Poke Radio'}
-        className={
-          'w-11 h-11 rounded-full bg-[#1E2030] border text-lg transition-colors ' +
+          className={
+          'w-11 h-11 rounded-full border text-lg transition-colors shadow-lg ' +
           (playing
-            ? 'border-[#E8A33D] text-[#E8A33D]'
-            : 'border-[#2A2C3D] text-[#C7C9D9] hover:border-[#E8A33D]')
+            ? 'bg-[#E8A33D] border-[#E8A33D] text-[#14151F]'
+            : 'bg-gradient-to-br from-[#E8A33D]/25 to-[#E8A33D]/5 border-[#E8A33D]/50 text-[#E8A33D] hover:border-[#E8A33D]')
         }
       >
         🎵
