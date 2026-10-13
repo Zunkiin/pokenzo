@@ -1,0 +1,114 @@
+'use client'
+
+import { useRadio } from '@/components/radio-provider'
+import BackButton from '@/components/back-button'
+
+export default function RadioPage() {
+  const radio = useRadio()
+  const { stations, stationIndex, station, status, playing, volume, canSetVolume, failed } = radio
+  const stationFailed = failed.includes(station.id)
+
+  return (
+    <main className="min-h-screen text-[#EDEAE3] px-4 pt-20 pb-16">
+      <div className="max-w-md md:max-w-xl mx-auto space-y-6">
+        <BackButton />
+
+        <div>
+          <h1 className="text-2xl font-semibold mb-2">Pokenzo Radio</h1>
+          <p className="text-sm text-[#8A8C9C]">
+            Live lofi radio, chill here for a while...
+          </p>
+        </div>
+
+        {/* Hovedspiller */}
+        <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-5 space-y-4">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={radio.togglePlay}
+              disabled={status === 'loading'}
+              aria-label={playing ? 'Pause music' : 'Play music'}
+              className="flex-shrink-0 w-14 h-14 rounded-full bg-[#E8A33D] text-[#14151F] text-xl font-bold disabled:opacity-50 hover:opacity-90 transition-opacity"
+            >
+              {status === 'loading' ? '…' : playing ? '❚❚' : '▶'}
+            </button>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-[#8A8C9C]">
+                {playing ? 'Now playing' : 'Selected'}
+              </p>
+              <p className="truncate text-base font-semibold">{station.name}</p>
+            </div>
+          </div>
+
+          {(status === 'error' || stationFailed) && (
+            <p className="text-xs text-[#8A8C9C]">This station isn&apos;t available right now. Try another one below.</p>
+          )}
+
+          <div className={'eq' + (playing ? ' eq-on' : '')} style={{ height: 40 }} aria-hidden="true">
+            <span /><span /><span /><span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span /><span /><span /><span />
+          </div>
+
+          {canSetVolume ? (
+            <div>
+              <p className="mb-1 text-[10px] text-[#8A8C9C]">Volume</p>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={volume}
+                onChange={(e) => radio.setVolume(Number(e.target.value))}
+                aria-label="Volume"
+                className="block w-full accent-[#E8A33D]"
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-[#8A8C9C]">Use your phone&apos;s volume buttons to change the volume.</p>
+          )}
+        </div>
+
+        {/* Stasjoner */}
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-[#E8A33D]">Stations</h2>
+          {stations.map((s, i) => {
+            const isActive = i === stationIndex
+            const isFailed = failed.includes(s.id)
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => radio.selectStation(i)}
+                aria-pressed={isActive}
+                className={
+                  'w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors ' +
+                  (isActive
+                    ? 'border-[#E8A33D] bg-[#E8A33D]/10'
+                    : 'border-[#2A2C3D] bg-[#1E2030] hover:border-[#E8A33D]')
+                }
+              >
+                <span className="truncate text-sm font-medium">{s.name}</span>
+                <span className="flex-shrink-0 text-[11px] text-[#8A8C9C]">
+                  {isFailed ? 'Unavailable' : isActive && playing ? 'Playing' : ''}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <p className="text-[11px] leading-relaxed text-[#5C5E70]">
+          Streams are played from YouTube and belong to their respective channels.{' '}
+          <a
+            href={`https://www.youtube.com/watch?v=${station.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#8A8C9C] hover:text-[#E8A33D] transition-colors"
+          >
+            Open this station on YouTube ↗
+          </a>
+          . Playback stops when you leave the browser on iPhone.
+        </p>
+      </div>
+    </main>
+  )
+}

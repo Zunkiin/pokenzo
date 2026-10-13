@@ -5,6 +5,7 @@ import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 import Starfield from '@/components/starfield'
 import LofiPlayer from '@/components/lofi-player'
+import RadioProvider from '@/components/radio-provider'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +29,14 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="bg-[#14151F] text-[#EDEAE3] min-h-screen">
-        <Starfield />
+      <Starfield />
+      <RadioProvider>
         <Navbar />
-        {children}
-        <Footer />
-        <Analytics />
-        <LofiPlayer />
+      {children}
+      <Footer />
+      <LofiPlayer />
+      </RadioProvider>
+      <Analytics />
         
     </body>
     </html>
