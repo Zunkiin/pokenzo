@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { useRadio } from '@/components/radio-provider'
 import BackButton from '@/components/back-button'
 
 export default function RadioPage() {
   const radio = useRadio()
+  const [stationsOpen, setStationsOpen] = useState(false)
   const { stations, stationIndex, station, status, playing, volume, canSetVolume, failed } = radio
   const stationFailed = failed.includes(station.id)
 
@@ -32,11 +34,29 @@ export default function RadioPage() {
             >
               {status === 'loading' ? '…' : playing ? '❚❚' : '▶'}
             </button>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[10px] uppercase tracking-wide text-[#8A8C9C]">
                 {playing ? 'Now playing' : 'Selected'}
               </p>
               <p className="truncate text-base font-semibold">{station.name}</p>
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={radio.prevStation}
+                aria-label="Previous station"
+                className="w-9 h-9 rounded-full border border-[#4A4D67] text-lg leading-none text-[#C7C9D9] hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={radio.nextStation}
+                aria-label="Next station"
+                className="w-9 h-9 rounded-full border border-[#4A4D67] text-lg leading-none text-[#C7C9D9] hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+              >
+                ›
+              </button>
             </div>
           </div>
 
@@ -68,32 +88,68 @@ export default function RadioPage() {
           )}
         </div>
 
-        {/* Stasjoner */}
-        <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-[#E8A33D]">Stations</h2>
-          {stations.map((s, i) => {
-            const isActive = i === stationIndex
-            const isFailed = failed.includes(s.id)
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => radio.selectStation(i)}
-                aria-pressed={isActive}
+        {/* Stasjoner (rullgardin) */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setStationsOpen((o) => !o)}
+            aria-expanded={stationsOpen}
+            className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#2A2C3D] bg-[#1E2030] px-4 py-3 hover:border-[#E8A33D] transition-colors"
+          >
+            <span className="text-sm font-semibold text-[#E8A33D]">Stations</span>
+            <span className="flex min-w-0 items-center gap-2 text-[11px] text-[#8A8C9C]">
+              <span
                 className={
-                  'w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors ' +
-                  (isActive
-                    ? 'border-[#E8A33D] bg-[#E8A33D]/10'
-                    : 'border-[#2A2C3D] bg-[#1E2030] hover:border-[#E8A33D]')
+                  'truncate max-w-[10rem] transition-opacity duration-300 ' +
+                  (stationsOpen ? 'opacity-0' : 'opacity-100')
                 }
               >
-                <span className="truncate text-sm font-medium">{s.name}</span>
-                <span className="flex-shrink-0 text-[11px] text-[#8A8C9C]">
-                  {isFailed ? 'Unavailable' : isActive && playing ? 'Playing' : ''}
-                </span>
-              </button>
-            )
-          })}
+                {station.name}
+              </span>
+              <span
+                className={'inline-block text-sm transition-transform duration-300 ' + (stationsOpen ? 'rotate-180' : '')}
+              >
+                ▾
+              </span>
+            </span>
+          </button>
+
+          <div
+            className={
+              'grid transition-all duration-300 ease-in-out ' +
+              (stationsOpen ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0 mt-0')
+            }
+            aria-hidden={!stationsOpen}
+            inert={!stationsOpen}
+          >
+            <div className="overflow-hidden">
+              <div className="space-y-2">
+                {stations.map((s, i) => {
+                  const isActive = i === stationIndex
+                  const isFailed = failed.includes(s.id)
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => radio.selectStation(i)}
+                      aria-pressed={isActive}
+                      className={
+                        'w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors ' +
+                        (isActive
+                          ? 'border-[#E8A33D] bg-[#E8A33D]/10'
+                          : 'border-[#2A2C3D] bg-[#1E2030] hover:border-[#E8A33D]')
+                      }
+                    >
+                      <span className="truncate text-sm font-medium">{s.name}</span>
+                      <span className="flex-shrink-0 text-[11px] text-[#8A8C9C]">
+                        {isFailed ? 'Unavailable' : isActive && playing ? 'Playing' : ''}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
         <p className="text-[11px] leading-relaxed text-[#5C5E70]">
