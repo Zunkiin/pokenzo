@@ -9,7 +9,7 @@ import { STATIONS } from '@/lib/stations'
 
 const VOLUME_KEY = 'pokenzo-lofi-volume'
 const STATION_KEY = 'pokenzo-radio-station'
-const DEFAULT_VOLUME = 15
+const DEFAULT_VOLUME = 20
 
 const RadioContext = createContext(null)
 
