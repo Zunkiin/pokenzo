@@ -361,6 +361,10 @@ export default function ProductList({ products, weeklyClickCounts = {} }) {
               <img
                 src={product.image_url}
                 alt={product.name}
+                width={56}
+                height={56}
+                loading="lazy"
+                decoding="async"
                 className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
               />
             )}

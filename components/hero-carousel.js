@@ -142,17 +142,25 @@ export default function HeroCarousel({ products }) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={handleClick}
-      className="relative h-64 sm:h-80 overflow-hidden rounded-b-2xl max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer select-none"
+      className="relative h-64 sm:h-80 overflow-hidden max-w-md md:max-w-3xl lg:max-w-5xl mx-auto cursor-pointer select-none"
     >
       <div style={trackStyle}>
-        {visibleProducts.map((p) => (
-          <div key={p.id} style={{ width: 100 / count + '%' }} className="relative h-64 sm:h-80 flex-shrink-0">
-            <img
-              src={p.image_url}
-              alt={p.name}
-              draggable={false}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+        {visibleProducts.map((p, i) => {
+          // Last bare bildet for aktiv slide og naboene (med wrap-around).
+          // Resten er tomme plassholdere, så nettleseren ikke henter hundrevis av bilder.
+          const dist = Math.min(Math.abs(i - index), count - Math.abs(i - index))
+          const loadImage = dist <= 1
+          return (
+          <div key={p.id} style={{ width: 100 / count + '%' }} className="relative h-64 sm:h-80 flex-shrink-0 bg-[#1E2030]">
+            {loadImage && (
+              <img
+                src={p.image_url}
+                alt={p.name}
+                draggable={false}
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#14151F] via-[#14151F]/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <p className="text-xs uppercase tracking-[0.2em] text-[#E8A33D] font-semibold mb-1">
@@ -173,7 +181,8 @@ export default function HeroCarousel({ products }) {
               )}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {count > 1 && (
