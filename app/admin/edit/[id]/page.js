@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import { updateProductAction, updateListingAction, deleteListingAction } from '../../actions'
+import { updateProductAction, updateListingAction, deleteListingAction, deleteProductAction } from '../../actions'
+import ConfirmDeleteButton from '@/components/confirm-delete-button'
 import Link from 'next/link'
 
 export default async function EditProductPage({ params }) {
@@ -118,6 +119,22 @@ export default async function EditProductPage({ params }) {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="rounded-xl border border-[#C1554A]/60 bg-[#C1554A]/5 p-4 mt-6">
+          <h2 className="text-sm font-semibold text-[#C1554A] mb-2">Danger zone</h2>
+          <p className="text-xs text-[#8A8C9C] mb-3">
+            Deletes this product, all its store listings and all price history. This cannot be undone.
+          </p>
+          <form action={deleteProductAction}>
+            <input type="hidden" name="product_id" value={product.id} />
+            <ConfirmDeleteButton
+              message={`Delete "${product.name}" and all ${listings?.length || 0} listing(s)? This cannot be undone.`}
+              className="w-full text-sm font-medium px-4 py-2 rounded-lg bg-[#C1554A]/15 border border-[#C1554A] text-[#C1554A] hover:bg-[#C1554A]/25"
+            >
+              Delete entire product
+            </ConfirmDeleteButton>
+          </form>
         </div>
       </div>
     </main>

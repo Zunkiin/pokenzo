@@ -124,6 +124,63 @@ export async function deleteListingAction(formData) {
   redirect(productId ? `/admin/edit/${productId}` : '/admin')
 }
 
+export async function deleteProductAction(formData) {
+  // Denne er destruktiv, så den sjekker admin-cookien selv.
+  const cookieStore = await cookies()
+  if (cookieStore.get('admin_auth')?.value !== 'true') {
+    throw new Error('Not authorized')
+  }
+
+  const supabase = getSupabaseAdmin()
+  const productId = formData.get('product_id')
+  if (!productId) {
+    throw new Error('Missing product id')
+  }
+
+  // Rekkefølge: price_history -> listings -> products (foreign keys).
+  const { data: listings, error: listError } = await supabase
+    .from('listings')
+    .select('id')
+    .eq('product_id', productId)
+
+  if (listError) {
+    throw new Error('Failed to read listings: ' + listError.message)
+  }
+
+  const listingIds = (listings || []).map((l) => l.id)
+
+  if (listingIds.length > 0) {
+    const { error: historyError } = await supabase
+      .from('price_history')
+      .delete()
+      .in('listing_id', listingIds)
+
+    if (historyError) {
+      throw new Error('Failed to delete price history: ' + historyError.message)
+    }
+
+    const { error: listingsError } = await supabase
+      .from('listings')
+      .delete()
+      .eq('product_id', productId)
+
+    if (listingsError) {
+      throw new Error('Failed to delete listings: ' + listingsError.message)
+    }
+  }
+
+  const { error: productError } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', productId)
+
+  if (productError) {
+    throw new Error('Failed to delete product: ' + productError.message)
+  }
+
+  redirect('/admin')
+}
+
 export async function updateProductAction(formData) {
   const supabase = getSupabaseAdmin()
 

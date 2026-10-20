@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
     <main className="min-h-screen bg-[#14151F] text-[#EDEAE3] px-4 pt-20 pb-16">
       <div className="max-w-2xl mx-auto space-y-6 text-sm leading-relaxed">
         <h1 className="text-2xl font-semibold mb-2">Privacy Policy</h1>
-        <p className="text-[#8A8C9C]">Last updated: July 22, 2026</p>
+        <p className="text-[#8A8C9C]">Last updated: October 20, 2026</p>
 
         <section>
           <h2 className="text-lg font-semibold mb-2 text-[#E8A33D]">1. Introduction</h2>
@@ -50,13 +50,14 @@ export default function PrivacyPolicyPage() {
             <li><strong>Sightengine</strong> - automated moderation of uploaded images</li>
             <li><strong>PokeAPI / Pokémon Showdown</strong> - Pokémon and trainer sprite images</li>
             <li><strong>Discord</strong> - our community server is hosted on Discord. If you join, your activity there is governed by Discord's own privacy policy and terms, not Pokenzo's.</li>
+            <li><strong>YouTube (Google)</strong> - Pokenzo Radio plays live streams through YouTube's embedded player. The player only loads when you press play. When it does, YouTube may store information in your browser and receives your IP address, as described in Google's privacy policy.</li>
           </ul>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold mb-2 text-[#E8A33D]">5. Cookies</h2>
           <p className="text-[#C7C9D9]">
-            We use essential cookies/local storage to keep you logged in. We may use analytics cookies to understand site traffic. We do not use cookies for third-party advertising tracking beyond what is disclosed here.
+            We use essential cookies/local storage to keep you logged in. We also store your Pokenzo Radio settings (selected station and volume) in your browser's local storage on your own device. We may use analytics cookies to understand site traffic. When you play Pokenzo Radio, YouTube's player may set its own cookies or local storage under Google's policies. We do not use cookies for third-party advertising tracking beyond what is disclosed here.
           </p>
         </section>
 
