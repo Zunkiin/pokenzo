@@ -208,17 +208,6 @@ export default function HeroCarousel({ products }) {
         </>
       )}
 
-      {count > 1 && (
-        <div className="absolute top-3 right-3 flex gap-1">
-          {visibleProducts.map((p, i) => (
-            <span
-              key={p.id}
-              className={'h-1.5 rounded-full transition-all ' + (i === index ? 'w-4 bg-[#E8A33D]' : 'w-1.5 bg-white/30')}
-            />
-          ))}
-        </div>
-      )}
-
     
     </div>
   )
