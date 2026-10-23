@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRadio } from '@/components/radio-provider'
+import Link from 'next/link'
 import BackButton from '@/components/back-button'
+import { Home } from 'lucide-react'
 
 export default function RadioPage({ hero = null, productList = null }) {
   const radio = useRadio()
@@ -20,7 +22,17 @@ export default function RadioPage({ hero = null, productList = null }) {
       {hero}
       <div className={'px-4' + (hero ? ' pt-6' : '')}>
       <div className="max-w-md md:max-w-xl lg:max-w-5xl mx-auto space-y-6">
-        <BackButton />
+        <div className="flex items-start gap-2 -mb-3">
+          <BackButton />
+          <Link
+            href="/"
+            aria-label="Pokenzo home"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#EDEAE3] bg-[#1E2030] border border-[#2A2C3D] rounded-lg px-3 py-1.5 hover:border-[#E8A33D] transition-colors mb-4"
+          >
+            <img src="/logo.png" alt="" className="w-[18px] h-[18px]" />
+            <span>Home</span>
+          </Link>
+        </div>
 
         <div>
           <h1 className="text-2xl font-semibold mb-2">Pokenzo Radio</h1>
