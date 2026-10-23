@@ -40,6 +40,21 @@ function cheapestOf(listings) {
   return cheapest
 }
 
+function getAllCountryPrices(product) {
+  const inStock = (product.listings || []).filter((l) => l.in_stock)
+  const flags = { NO: '🇳🇴', SE: '🇸🇪', DK: '🇩🇰' }
+
+  return ['NO', 'SE', 'DK']
+    .map((c) => {
+      const relevant = inStock.filter((l) => l.stores?.country === c || l.stores?.ships_to?.includes(c))
+      const best = cheapestOf(relevant)
+      if (!best) return null
+      const converted = convertCurrency(best.price, best.currency, COUNTRY_CURRENCY[c])
+      return { flag: flags[c], display: formatPrice(converted, COUNTRY_CURRENCY[c]) }
+    })
+    .filter(Boolean)
+}
+
 function enrich(product, country) {
   const all = relevantFor(product, country)
   const best = cheapestOf(all.filter((l) => l.in_stock))
@@ -53,7 +68,7 @@ function enrich(product, country) {
       priceDisplay = formatPrice(convertCurrency(best.price, best.currency, target), target)
     }
   }
-  return { ...product, storeCount: all.length, priceDisplay }
+  return { ...product, storeCount: all.length, priceDisplay, allCountryPrices: getAllCountryPrices(product) }
 }
 
 export default function RadioProducts({ products }) {
@@ -153,7 +168,15 @@ export default function RadioProducts({ products }) {
                 {product.language === 'JP' ? 'Japanese' : product.language === 'EN' ? 'English' : product.language === 'CN' ? 'Chinese' : ''} · {product.storeCount} {product.storeCount === 1 ? 'store' : 'stores'}
               </p>
             </div>
-            {product.priceDisplay ? (
+            {country === 'ALL' && product.allCountryPrices.length > 0 ? (
+              <div className="text-right flex-shrink-0">
+                {product.allCountryPrices.map((p, i) => (
+                  <p key={i} className="text-xs font-mono font-semibold text-[#E8A33D] whitespace-nowrap">
+                    {p.flag} {p.display}
+                  </p>
+                ))}
+              </div>
+            ) : product.priceDisplay ? (
               <p className="font-mono text-sm font-semibold text-[#E8A33D] whitespace-nowrap">{product.priceDisplay}</p>
             ) : (
               <p className="text-xs font-medium text-[#C1554A] whitespace-nowrap">Out of stock</p>
