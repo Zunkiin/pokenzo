@@ -1,18 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRadio } from '@/components/radio-provider'
 import BackButton from '@/components/back-button'
 
-export default function RadioPage() {
+export default function RadioPage({ hero = null, productList = null }) {
   const radio = useRadio()
   const [stationsOpen, setStationsOpen] = useState(false)
+
+  // Åpen som standard bare på desktop (to kolonner, lg og opp). Lukket på mobil.
+  useEffect(() => {
+    if (window.matchMedia('(min-width: 1024px)').matches) setStationsOpen(true)
+  }, [])
   const { stations, stationIndex, station, status, playing, volume, canSetVolume, failed } = radio
   const stationFailed = failed.includes(station.id)
 
   return (
-    <main className="min-h-screen text-[#EDEAE3] px-4 pt-20 pb-16">
-      <div className="max-w-md md:max-w-xl mx-auto space-y-6">
+    <main className={'min-h-screen text-[#EDEAE3] pb-16' + (hero ? '' : ' pt-20')}>
+      {hero}
+      <div className={'px-4' + (hero ? ' pt-6' : '')}>
+      <div className="max-w-md md:max-w-xl lg:max-w-5xl mx-auto space-y-6">
         <BackButton />
 
         <div>
@@ -22,6 +29,8 @@ export default function RadioPage() {
           </p>
         </div>
 
+        <div className={'grid grid-cols-1 gap-6 ' + (productList ? 'lg:grid-cols-2' : '')}>
+        <div className="space-y-6">
         {/* Hovedspiller */}
         <div className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-5 space-y-4">
           <div className="flex items-center gap-4">
@@ -134,7 +143,7 @@ export default function RadioPage() {
                       onClick={() => radio.selectStation(i)}
                       aria-pressed={isActive}
                       className={
-                        'w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors ' +
+                        'w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-[14.7px] text-left transition-colors ' +
                         (isActive
                           ? 'border-[#E8A33D] bg-[#E8A33D]/10'
                           : 'border-[#2A2C3D] bg-[#1E2030] hover:border-[#E8A33D]')
@@ -152,6 +161,16 @@ export default function RadioPage() {
           </div>
         </div>
 
+        </div>
+
+        {productList && (
+          <section className="rounded-xl border border-[#2A2C3D] bg-[#1E2030] p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-[#E8A33D]">Pokémon TCG prices &amp; stock</h2>
+            <div>{productList}</div>
+          </section>
+        )}
+        </div>
+
         <p className="text-[11px] leading-relaxed text-[#5C5E70]">
           Streams are played from YouTube and belong to their respective channels.{' '}
           <a
@@ -164,6 +183,7 @@ export default function RadioPage() {
           </a>
           . Playback stops when you leave the browser on iPhone.
         </p>
+      </div>
       </div>
     </main>
   )
