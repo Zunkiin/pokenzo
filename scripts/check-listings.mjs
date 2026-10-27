@@ -328,6 +328,46 @@ async function getShopifyVariantData(productUrl, productName) {
   }
 }
 
+// Log-only check (changes no behaviour): a store that has removed a product
+// often redirects the old URL to a category/home page that still returns
+// HTTP 200, so the page "loads fine" but the data on it is wrong. Collected
+// here and printed at the end of the run so they are easy to review.
+const redirectedListings = []
+
+// Dead-link handling (deliberately conservative):
+// - Only stores whose name starts with one of these prefixes.
+// - A listing is treated as dead ONLY when its URL was redirected to a page
+//   with a different number of path segments (e.g. a product page
+//   /no/pokemon/some-slug sent to the category page, or to the home page).
+//   A redirect to another product page (same depth, e.g. a renamed slug) is
+//   only logged, never acted on.
+// - Nothing is ever deleted and no price is written. The listing is only
+//   switched from in stock to out of stock, at the END of the run, and only
+//   if no more than MAX_DEAD_MARKS_PER_RUN listings are affected - a larger
+//   number is far more likely to be a bug (or a store-wide change) than real
+//   removals, so in that case nothing is changed and a warning is logged.
+// - If the link starts working again, the normal checks below take over.
+const DEAD_LINK_STORE_PREFIXES = ['Maxgaming']
+const MAX_DEAD_MARKS_PER_RUN = 20
+const deadListings = []
+
+function pathDepth(u) {
+  try {
+    return new URL(u).pathname.split('/').filter(Boolean).length
+  } catch {
+    return null
+  }
+}
+
+function samePath(a, b) {
+  try {
+    const norm = (u) => new URL(u).pathname.replace(/\/+$/, '').toLowerCase()
+    return norm(a) === norm(b)
+  } catch {
+    return true
+  }
+}
+
 async function main() {
   const { data: listings, error } = await supabase
   .from('listings')
@@ -367,6 +407,28 @@ async function main() {
         clearTimeout(timeoutId)
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      if (res.redirected && !samePath(listing.product_url, res.url)) {
+        redirectedListings.push({
+          id: listing.id,
+          store: listing.stores?.name,
+          country: listing.stores?.country,
+          product: listing.products?.slug,
+          from: listing.product_url,
+          to: res.url
+        })
+        console.warn(`[REDIRECT] listing ${listing.id} (${listing.stores?.name}, ${listing.products?.slug}) redirected to a different page: ${res.url}`)
+
+        const storeIsCovered = DEAD_LINK_STORE_PREFIXES.some((prefix) => (listing.stores?.name || '').startsWith(prefix))
+        const fromDepth = pathDepth(listing.product_url)
+        const toDepth = pathDepth(res.url)
+        if (storeIsCovered && fromDepth !== null && toDepth !== null && fromDepth !== toDepth) {
+          deadListings.push({ id: listing.id, store: listing.stores?.name, product: listing.products?.slug, wasInStock: listing.in_stock })
+          // Skip the normal price/stock processing for this listing: the page
+          // we ended up on is not the product, so nothing on it can be trusted.
+          continue
+        }
+      }
 
       const html = await res.text()
       const productName = listing.products?.name ?? 'Ukjent produkt'
@@ -529,4 +591,39 @@ async function main() {
   }
 }
 
-main()
+async function markDeadListings() {
+  if (deadListings.length === 0) return
+  console.warn(`\n=== ${deadListings.length} listing(s) detected as dead links (store removed the product) ===`)
+
+  if (deadListings.length > MAX_DEAD_MARKS_PER_RUN) {
+    console.warn(`SAFETY STOP: more than ${MAX_DEAD_MARKS_PER_RUN} dead links in one run. Changing nothing - check the list above by hand.`)
+    return
+  }
+
+  for (const l of deadListings) {
+    if (!l.wasInStock) {
+      console.log(`[dead link] listing ${l.id} (${l.store}, ${l.product}) already out of stock - nothing to do`)
+      continue
+    }
+    if (DRY_RUN) {
+      console.log(`[DRY RUN] Would mark listing ${l.id} (${l.store}, ${l.product}) as out of stock (dead link)`)
+      continue
+    }
+    const { error } = await supabase
+      .from('listings')
+      .update({ in_stock: false, last_checked_at: new Date().toISOString() })
+      .eq('id', l.id)
+      .eq('in_stock', true)
+    if (error) console.error(`Failed to mark listing ${l.id} as out of stock:`, error.message)
+    else console.log(`[dead link] listing ${l.id} (${l.store}, ${l.product}) marked out of stock`)
+  }
+}
+
+main().then(markDeadListings).then(() => {
+  if (redirectedListings.length > 0) {
+    console.warn(`\n=== ${redirectedListings.length} listing(s) redirected to a different page (possibly removed products) ===`)
+    for (const l of redirectedListings) {
+      console.warn(`${l.id}\t${l.store}\t${l.country}\t${l.product}\t-> ${l.to}`)
+    }
+  }
+})
